@@ -23,6 +23,8 @@ export const createUser = async (req, res = response) => {
             });
         }
 
+        await user.save();
+
         return res.status(201).json({
             ok: true,
             message: 'User created successfully',
@@ -84,7 +86,8 @@ export const logoutUser = async (req, res = response) => {
 }
 
 export const getUser = async (req, res = response) => {
-    const user = await User.findOne({ document: req.user.document });
+    const { document} = req.body;
+    const user = await User.findOne({ document: document });
     if (!user) {
         return res.status(403).json({ 
             ok: false,
