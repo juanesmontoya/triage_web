@@ -1,7 +1,9 @@
 services:
   api:
     container_name: triage_web
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
