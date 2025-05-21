@@ -1,7 +1,7 @@
 services:
   api:
     container_name: triage_web
-    build: .
+    build: ./back-end
     ports:
       - "3000:3000"
     environment:
@@ -21,6 +21,16 @@ services:
       - 27017:27017
     volumes:
       - mongo_data:/data/db
+  
+  frontend:
+    container_name: triage_web-frontend
+    build: ./front-end
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+    depends_on:
+      - api
 
 volumes:
   mongo_data: {}
