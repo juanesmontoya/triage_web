@@ -24,7 +24,7 @@ services:
   
   frontend:
     container_name: triage_web-frontend
-    build: ./front-end
+    build: ./Frontend
     ports:
       - "3000:80"
     environment:

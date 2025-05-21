@@ -1,13 +1,12 @@
-# Etapa 1: Build con Vite
 FROM node:20 AS build
 WORKDIR /app
 COPY . .
 RUN npm install
 RUN npm run build
 
-# Etapa 2: Servir con Nginx
+# Servir con Nginx
 FROM nginx:stable-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /app/nginx.config
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

@@ -508,8 +508,8 @@ const Sintomas = () => {
 
                 {/* Input Area*/}
                 {!showTriageResult && !showPatientForm && (
-                    <div className="card-actions justify-center p-4 bg-base-200 rounded-b-xl bg-pink-700">
-                        <div className="join w-full bg-pink-500">
+                    <div className="card-actions justify-center p-4 bg-base-200 rounded-b-xl">
+                        <div className="join w-full">
                             <button 
                                 onClick={toggleRecording}
                                 className={`btn join-item ${isRecording ? 'btn-error animate-pulse' : 'btn-ghost'}`}
@@ -529,7 +529,7 @@ const Sintomas = () => {
                             />
                             <button
                                 onClick={handleSend}
-                                className="btn btn-primary join-item bg-pink-500"
+                                className="btn btn-primary join-item"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
