@@ -1,7 +1,9 @@
 services:
   api:
     container_name: triage_web
-    build: ./back-end
+    build: 
+      context: ./back-end
+    command: npm start
     ports:
       - "3000:3000"
     environment:
@@ -9,7 +11,7 @@ services:
       MONGODB_URI: mongodb+srv://juanesmontoya92:tdea@electiva2.zd1g5.mongodb.net/triageDb
       JWT_SECRET: anysecret
     volumes:
-      - .:/app
+      - ./back-end:/app
     depends_on:
       - mongo_db
 
@@ -24,11 +26,14 @@ services:
   
   frontend:
     container_name: triage_web-frontend
-    build: ./Frontend
+    build: 
+      context: ./Frontend
+    working_dir: /app
     ports:
-      - "3000:80"
-    environment:
-      - REACT_APP_API_URL=http://localhost:3000
+      - "3001:3001"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - api
 

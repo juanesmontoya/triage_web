@@ -1,12 +1,10 @@
-FROM node:20 AS build
+FROM node:24-alpine
 WORKDIR /app
+COPY package*.json ./
 COPY . .
+RUN npm cache clean --force
 RUN npm install
-RUN npm run build
-
-# Servir con Nginx
-FROM nginx:stable-alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /app/nginx.config
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 3001
+ENV HOST 0.0.0.0
+ENV PORT 3001
+CMD ["npm", "run", "dev"]
