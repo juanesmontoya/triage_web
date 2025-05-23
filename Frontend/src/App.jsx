@@ -1,11 +1,11 @@
 import React from "react";
 import Home from "./home/Home";
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import Signup from "./components/Signup";
 import Sintomas from "./components/sintomas";
 import Panelmedico from "./components/Panelmedico";
 import { Toaster } from "react-hot-toast";
 import { useAuth } from "./context/AuthProvider";
+import Register from "./components/Register";
 
 
 function App() {
@@ -17,8 +17,8 @@ function App() {
         
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/sintomas" element={authUser?<Sintomas />:<Navigate to="/signup"/>} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/sintomas" element={authUser?<Sintomas />:<Navigate to="/register"/>} />
             <Route path="/panelmedico" element={<Panelmedico />} />
           </Routes>
           <Toaster />
