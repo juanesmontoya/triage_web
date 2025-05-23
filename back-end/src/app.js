@@ -1,5 +1,6 @@
 import express from 'express';
 import userRoutes from './routes/user.routes.js';
+import pacientRoutes from './routes/pacient.routes.js';
 
 
 const app = express();
@@ -7,6 +8,7 @@ const app = express();
 app.use(express.json());
 
 
-app.use("/triage", userRoutes);
+app.use("/", userRoutes);
+app.use("/pacient", pacientRoutes);
 
 export default app;
