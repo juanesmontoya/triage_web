@@ -17,25 +17,47 @@ function Login() {
             password: data.password,
         }
         
+        console.log("Datos enviados:", userInfo); 
+        
         try {
             const res = await axios.post("http://localhost:3000/triage/login", userInfo);
             
-            console.log(res.data);
-            if (res.data.ok) {
+            console.log("Respuesta completa:", res.data); 
+            
+            
+            if (res.data && (res.data.ok || res.data.success || res.status === 200)) {
                 toast.success("Login exitoso!");
                 document.getElementById("my_modal_3")?.close();
-                localStorage.setItem("Users", JSON.stringify(res.data.user));
+                
+                
+                const userData = res.data.user || res.data.data || res.data;
+                console.log("Datos del usuario a guardar:", userData); 
+                
+                if (userData) {
+                    localStorage.setItem("Users", JSON.stringify(userData));
+                    console.log("Guardado en localStorage:", localStorage.getItem("Users")); 
+                } else {
+                    console.warn("No se encontraron datos del usuario en la respuesta");
+                }
                 
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);  
+            } else {
+                console.log("Respuesta no exitosa:", res.data);
+                toast.error("Error en el login: " + (res.data.message || "Error desconocido"));
             }
         } catch (err) {
+            console.error("Error completo:", err); 
             if (err.response) {
-                console.log(err);
-                toast.error("Error: " + err.response.data.message);
+                console.log("Error de respuesta:", err.response.data);
+                toast.error("Error: " + (err.response.data.message || "Error del servidor"));
+            } else if (err.request) {
+                console.log("Error de red:", err.request);
+                toast.error("Error de red, verifica tu conexión");
             } else {
-                toast.error("Error de conexión, intenta de nuevo");
+                console.log("Error:", err.message);
+                toast.error("Error inesperado, intenta de nuevo");
             }
         }
     };
@@ -83,7 +105,10 @@ function Login() {
                         
                         {/* Button */}
                         <div className='flex justify-around mt-4'>
-                            <button className="bg-pink-500 text-white rounded-md px-3 py-1 hover:bg-pink-700 duration-200">
+                            <button 
+                                type="submit"
+                                className="bg-pink-500 text-white rounded-md px-3 py-1 hover:bg-pink-700 duration-200"
+                            >
                                 Login
                             </button>
                             <p>
