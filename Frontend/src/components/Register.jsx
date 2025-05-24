@@ -1,5 +1,5 @@
 import React from 'react'
-import axios from 'axios';
+import axios from 'axios'; // Import axios
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Login from './Login';
 import { useForm } from 'react-hook-form';
@@ -8,63 +8,39 @@ import toast from 'react-hot-toast';
 function Register() {
   const location = useLocation();
   const navigate = useNavigate();
-  const from = location.state?.from?.pathname || "/"
+  const from = location.state?.from?.pathname || "/panelmedico"
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-const onSubmit = async (data) => { 
+  const onSubmit = async (data) => { 
   const userInfo = {
     fullname: data.fullname,
     document: data.document,
     email: data.email,
     password: data.password,
   }
-  
-  console.log("Datos enviados:", userInfo); // Datos enviados
-  
-  try {
-    const res = await axios.post("http://localhost:3000/triage/register", userInfo);
-    
-    console.log("Respuesta completa:", res.data);
-    
-    
-    if (res.data && (res.data.ok || res.data.success || res.status === 200)) {
-      toast.success("Registration Successful!");
-      
-      
-      const userData = res.data.user || res.data.data || res.data;
-      console.log("Datos del usuario a guardar:", userData); 
-      
-      if (userData) {
-        localStorage.setItem("Users", JSON.stringify(userData));
-        console.log("Guardado en localStorage:", localStorage.getItem("Users")); 
-      } else {
-        console.warn("No se encontraron datos del usuario en la respuesta");
+  await axios
+    .post("http://localhost:3000/triage/register", userInfo)
+    .then((res) => {
+      console.log(res.data);
+      if (res.data) {
+        toast.success("Register Successfully!");
+        navigate (from, {replace: true});
       }
+      localStorage.setItem("Users", JSON.stringify(res.data.user));
+    })
+    .catch((err) =>{
+      if(err.response){
+        console.log(err);
+        toast.error("Error: " + err.response.data.message);
+      }
+    });
+    
       
-      navigate(from, {replace: true});
-    } else {
-      console.log("Respuesta no exitosa:", res.data);
-      toast.error("Error en el registro: " + (res.data.message || "Error desconocido"));
-    }
-  } catch (err) {
-    console.error("Error completo:", err); // ver error completo
-    if (err.response) {
-      console.log("Error de respuesta:", err.response.data);
-      toast.error("Error: " + (err.response.data.message || "Error del servidor"));
-    } else if (err.request) {
-      console.log("Error de red:", err.request);
-      toast.error("Error de red, verifica tu conexión");
-    } else {
-      console.log("Error:", err.message);
-      toast.error("Error inesperado, intenta de nuevo");
-    }
-  }
-};
-
+  };
   return (
     <>
       <div className='flex h-screen items-center justify-center'>
@@ -135,10 +111,7 @@ const onSubmit = async (data) => {
               
               {/* Button */}
               <div className='flex justify-around mt-4'>
-                <button 
-                  type="submit"
-                  className="bg-pink-500 text-white rounded-md px-3 py-1 hover:bg-pink-700 duration-200"
-                >
+                <button className="bg-pink-500 text-white rounded-md px-3 py-1 hover:bg-pink-700 duration-200">
                   Registrarse
                 </button>
                 <p className='text-sm'>

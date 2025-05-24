@@ -43,6 +43,10 @@ function Navbar() {
         };
     }, []);
 
+    const isUserLoggedIn = () => {
+        return authUser && authUser !== null;
+    };
+
     const navItems = (
         <>
             <li>
@@ -51,10 +55,12 @@ function Navbar() {
             <li>
                 <a href='./sintomas' className="btn btn-outline btn-secondary px-1 text-xs ">Comprueba tus síntomas</a>
             </li>
-            <li>
-                <a href='./panelmedico'>Doctor Panel</a>
-            </li>
-            
+            {/* SOLO mostrar Doctor Panel si el usuario está logueado */}
+            {isUserLoggedIn() && (
+                <li>
+                    <a href='./panelmedico'>Doctor Panel</a>
+                </li>
+            )}
         </>
     );
 

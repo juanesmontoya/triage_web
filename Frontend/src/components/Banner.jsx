@@ -38,8 +38,7 @@ function Banner() {
             </h1>
             <p className="text-sm md:text-xl">
               Utiliza nuestro sistema de triaje automatizado con IA y 
-              procesamiento de lenguaje natural para una orientación precisa en minutos. 
-              Solo tienes que registrarte.
+              procesamiento de lenguaje natural para una orientación precisa en minutos.
             </p>
             <form onSubmit={handleSubmit(onSubmit)}>
               <label className="input input-bordered flex items-center gap-2">
