@@ -1,0 +1,5 @@
+Flask
+pipwin
+pyaudio
+SpeechRecognition
+pymongo
