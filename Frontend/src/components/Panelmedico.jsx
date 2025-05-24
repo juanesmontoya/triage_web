@@ -1,20 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, AlertTriangle, User, Search, LogOut, RefreshCw, FileText, Calendar } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthProvider';
+
+function Logout() {
+    const [authUser, setAuthUser]= useAuth()
+    const handleLogout=()=>{
+        try {
+            setAuthUser({
+                ...authUser,
+                user:null,
+            })
+            localStorage.removeItem("Users");
+            toast.success("Logout successfully");
+            
+          setTimeout(() => {
+            window.location.reload();
+          },3000);
+        } catch (error) {
+            toast.error("Error: " + error)
+            setTimeout(() =>{},2000)    
+        }
+    };
+  return (
+    <div>
+      <button className='px-3 py-2 bg-red-500 text-white rounded-md cursor-pointer'
+      onClick={handleLogout}>
+        Logout
+      </button>
+    </div>
+  )
+}
+
+export { Logout }
 
 const Panelmedico = () => {
+    
     const [conversations, setConversations] = useState([]);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loginData, setLoginData] = useState({ username: '', password: '' });
+    //const [isAuthenticated, setIsAuthenticated] = useState(false);
+    //const [loginData, setLoginData] = useState({ username: '', password: '' });
     const [notes, setNotes] = useState('');
     
     // Verificar autenticación al cargar
     useEffect(() => {
         const doctorAuth = localStorage.getItem('doctorAuth');
         if (doctorAuth === 'true') {
-            setIsAuthenticated(true);
+            //setIsAuthenticated(true);
             loadConversations();
         }
     }, []);
@@ -25,7 +59,7 @@ const Panelmedico = () => {
         setConversations(storedConversations);
     };
 
-    // Manejar cambios en el formulario de login
+    {/*/ Manejar cambios en el formulario de login
     const handleLoginChange = (e) => {
         const { name, value } = e.target;
         setLoginData({
@@ -47,14 +81,14 @@ const Panelmedico = () => {
         } else {
             alert('Credenciales inválidas');
         }
-    };
+    };*/}
 
-    // Cerrar sesión
+    {/*/ Cerrar sesión
     const handleLogout = () => {
         localStorage.removeItem('doctorAuth');
-        setIsAuthenticated(false);
+        //setIsAuthenticated(false);
         setSelectedConversation(null);
-    };
+    };*/}
 
     // Seleccionar una conversación para ver detalles
     const viewConversation = (conversation) => {
@@ -125,7 +159,7 @@ const Panelmedico = () => {
         return date.toLocaleString();
     };
 
-    // Si no está autenticado, mostrar formulario de login
+    {/*// Si no está autenticado, mostrar formulario de login
     if (!isAuthenticated) {
         return (
             <div className="hero min-h-screen bg-base-200">
@@ -147,8 +181,8 @@ const Panelmedico = () => {
                                     name="username"
                                     placeholder="usuario" 
                                     className="input input-bordered" 
-                                    value={loginData.username}
-                                    onChange={handleLoginChange}
+                                    //value={loginData.username}
+                                   // onChange={handleLoginChange}
                                 />
                             </div>
                             <div className="form-control">
@@ -160,11 +194,11 @@ const Panelmedico = () => {
                                     name="password"
                                     placeholder="contraseña" 
                                     className="input input-bordered" 
-                                    value={loginData.password}
-                                    onChange={handleLoginChange}
+                                    //value={loginData.password}
+                                    //onChange={handleLoginChange}
                                 />
                             </div>
-                            <div className="form-control mt-6">
+                            {/*<div className="form-control mt-6">
                                 <button className="btn btn-secondary" onClick={handleLogin}>Iniciar Sesión</button>
                             </div>
                         </div>
@@ -172,7 +206,7 @@ const Panelmedico = () => {
                 </div>
             </div>
         );
-    }
+    }*/}
 
     return (
         <div className="drawer lg:drawer-open">
@@ -187,7 +221,7 @@ const Panelmedico = () => {
                         <button className="btn btn-ghost" onClick={loadConversations}>
                             <RefreshCw className="w-5 h-5" />
                         </button>
-                        <button className="btn btn-ghost" onClick={handleLogout}>
+                        <button className="btn btn-ghost">
                             <LogOut className="w-5 h-5" />
                             <span className="hidden md:inline ml-2">Cerrar sesión</span>
                         </button>
