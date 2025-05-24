@@ -37,5 +37,18 @@ services:
     depends_on:
       - api
 
+  python:
+    container_name: triage_web-python
+    build: 
+      context: ./python
+    working_dir: /app
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./python:/app
+      - /app/venv
+    depends_on:
+      - api
+
 volumes:
   mongo_data: {}
