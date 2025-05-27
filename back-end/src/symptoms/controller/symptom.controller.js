@@ -15,9 +15,9 @@ export const getSymptoms = async (req, res = response) => {
 };
 
 export const createSymptom = async (req, res = response) => {
-    const { symptom, triageLevel } = req.body;
+    const { symptom, triageLevel, description } = req.body;
     try {
-        let newSymptom = new Symptom({ symptom, triageLevel });
+        let newSymptom = new Symptom({ symptom, triageLevel, description });
 
         const symptomExists = await Symptom.findOne({ symptom: symptom });
         if (symptomExists) {
@@ -32,10 +32,7 @@ export const createSymptom = async (req, res = response) => {
         return res.status(201).json({
             ok: true,
             message: 'Symptom created successfully',
-            symptom: {
-                symptom: newSymptom.symptom,
-                triageLevel: newSymptom.triageLevel
-            }
+            newSymptom
         });
 
     } catch (error) {
