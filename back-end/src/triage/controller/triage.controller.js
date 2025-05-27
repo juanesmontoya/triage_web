@@ -2,9 +2,13 @@ import { response } from "express";
 import Triage from "../model/triage.model.js";
 
 export const createTriage = async (req, res = response) => {
-    const { patientId, visitDetail } = req.body;
+    const { patientId, patientDocument, visitDetail } = req.body;
     try {
-        let triage = new Triage({ patientId, visitDetail});
+        let triage = new Triage({ 
+            patientId, 
+            patientDocument, 
+            visitDetail
+        });
 
         await triage.save();
 
@@ -58,8 +62,7 @@ export const getAllTriage = async (req, res = response) => {
 }   
 
 export const updateTriage = async (req, res = response) => {
-    const { id } = req.params;
-    const { doctorId, diagnosis, triageLevel, state } = req.body;
+    const { id, doctorId, diagnosis, triageLevel, state } = req.body;
     try {
         const triage = await Triage.findById(id);
         if (!triage) {
@@ -87,8 +90,7 @@ export const updateTriage = async (req, res = response) => {
 }
 
 export const updateTriageLevel = async (req, res = response) => {
-    const { id } = req.params;
-    const { triageLevel } = req.body;
+    const { id, triageLevel } = req.body;
     try {
         const triage = await Triage.findById(id);
         if (!triage) {
