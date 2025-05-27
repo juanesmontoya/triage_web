@@ -1,36 +1,144 @@
 import React, { useState } from 'react'
 import banner from "../../public/doc.png";
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 function Banner() {
-  const { register, handleSubmit, reset } = useForm();
-  const { register: registerPatient, handleSubmit: handleSubmitPatient, reset: resetPatient } = useForm();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register: registerPatient, handleSubmit: handleSubmitPatient, reset: resetPatient, formState: { errors: errorsPatient } } = useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const onSubmit = (data) => {
-    console.log('Documento ingresado:', data);
-    // Abrir el modal cuando se envía el formulario del documento
-    setIsModalOpen(true);
-  };
-
-  const userExists = (data) => {
-    console.log('Documento ingresado:', data);
-    // Abrir el modal cuando se envía el formulario del documento
-    setIsModalOpen(true);
-  };
-
-  const onSubmitPatient = (data) => {
-    console.log('Datos del paciente:', data);
+  
+  const onInitiateTriage = async (data) => {
+    setIsLoading(true);
+    const patientData = { document: data.document };
     
-    // lógica para enviar los datos del paciente
-    setIsModalOpen(false);
-    resetPatient(); // Limpiar el formulario del modal
-    reset(); // Limpiar el formulario principal
+    await axios
+      .post("http://localhost:3000/pacient/validatePacient", patientData)
+      .then((res) => {
+        console.log(res.data);
+        if (res.data.ok && res.data.pacient) {
+          // Verificar que realmente encontró un paciente
+          const pacientFound = Array.isArray(res.data.pacient) ? res.data.pacient[0] : res.data.pacient;
+          
+          if (pacientFound && pacientFound._id) {
+            // Guardar todos los datos del paciente incluyendo timestamps
+            const fullPacientData = {
+              _id: pacientFound._id,
+              fullname: pacientFound.fullname,
+              document: pacientFound.document,
+              email: pacientFound.email,
+              createdAt: pacientFound.createdAt,
+              updatedAt: pacientFound.updatedAt
+            };
+            
+            localStorage.setItem("Patient", JSON.stringify(fullPacientData));
+            toast.success("Documento verificado. Iniciando triage...");
+            navigate('/sintomas', { state: { paciente: fullPacientData } });
+          } else {
+            // No se encontró paciente válido
+            toast.error("Documento no encontrado. Por favor regístrese primero.");
+            reset();
+          }
+        } else {
+          // Respuesta no válida del servidor
+          toast.error("Documento no encontrado. Por favor regístrese primero.");
+          reset();
+        }
+      })
+      .catch((err) => {
+        if (err.response) {
+          console.log(err);
+          if (err.response.status === 404) {
+            toast.error("Documento no encontrado. Por favor regístrese primero.");
+          } else if (err.response.status === 400) {
+            toast.error("Documento es requerido.");
+          } else {
+            toast.error("Error: " + (err.response.data.message || "Error del servidor"));
+          }
+        } else {
+          toast.error("Error de conexión");
+        }
+        reset(); // Limpiar el formulario en caso de error
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  // Función para abrir modal de registro
+  const openRegistrationModal = () => {
+    setIsModalOpen(true);
+  };
+
+  // Función para registrar nuevo paciente
+  const onSubmitPatient = async (data) => {
+    setIsLoading(true);
+    const patientInfo = {
+      fullname: data.fullname,
+      document: data.document,
+      email: data.email
+    };
+
+    await axios
+      .post("http://localhost:3000/pacient/createPacient", patientInfo)
+      .then((res) => {
+        console.log(res.data);
+        if (res.data.ok && res.data.pacient) {
+          // Guardar todos los datos completos del paciente según el modelo
+          const fullPacientData = {
+            _id: res.data.pacient._id,
+            fullname: res.data.pacient.fullname,
+            document: res.data.pacient.document,
+            email: res.data.pacient.email,
+            createdAt: res.data.pacient.createdAt,
+            updatedAt: res.data.pacient.updatedAt
+          };
+          
+          localStorage.setItem("Patient", JSON.stringify(fullPacientData));
+          toast.success("Registro exitoso! Iniciando triage...");
+          
+
+          
+          // Cerrar modal y limpiar formularios
+          setIsModalOpen(false);
+          resetPatient();
+          reset();
+          
+          // Redirigir automáticamente a síntomas después del registro
+          navigate('/sintomas', { 
+            state: { paciente: fullPacientData },
+            replace: true 
+          });
+        } else {
+          toast.error("Error en el registro. Datos incompletos del servidor.");
+        }
+      })
+      .catch((err) => {
+        if (err.response) {
+          console.log(err);
+          if (err.response.status === 403) {
+            // Manejar errores específicos de documento o email duplicado
+            toast.error("Error: " + err.response.data.message);
+          } else {
+            toast.error("Error: " + (err.response.data.message || "Error del servidor"));
+          }
+        } else {
+          toast.error("Error de conexión");
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    resetPatient(); // Limpiar el formulario cuando se cierre el modal
+    resetPatient();
   };
 
   return (
@@ -46,16 +154,49 @@ function Banner() {
               Utiliza nuestro sistema de triaje automatizado con IA y 
               procesamiento de lenguaje natural para una orientación precisa en minutos.
             </p>
-            <form onSubmit={handleSubmit(userExists)}>
+            
+            {/* Formulario principal */}
+            <form onSubmit={handleSubmit(onInitiateTriage)} className="space-y-4">
               <label className="input input-bordered flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
-                  <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
+                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
                 </svg>
+                <input 
+                  type="text" 
+                  className="grow" 
+                  placeholder="Ingrese su número de documento"
+                  {...register("document", { 
+                    required: "El documento es requerido",
+                    minLength: {
+                      value: 5,
+                      message: "El documento debe tener al menos 5 caracteres"
+                    }
+                  })}
+                />
               </label>
-              <button type="submit" className="btn mt-4 btn-primary">Iniciar triage</button>
-            </form>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <button type="submit" className="btn mt-4 btn-secondary">Registro</button>
+              
+              {errors.document && (
+                <p className="text-red-500 text-sm">{errors.document.message}</p>
+              )}
+              
+              {/* Botones */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="btn btn-primary flex-1 sm:flex-none sm:min-w-[140px]"
+                >
+                  {isLoading ? 'Verificando...' : 'Iniciar Triage'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={openRegistrationModal}
+                  disabled={isLoading}
+                  className="btn btn-secondary flex-1 sm:flex-none sm:min-w-[140px]"
+                >
+                  Registro
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -64,7 +205,7 @@ function Banner() {
           <img
             src={banner}
             className="md:w-[550px] md:h-[460px] md:ml-12"
-            alt=""
+            alt="Banner médico"
           />
         </div>
       </div>
@@ -78,6 +219,7 @@ function Banner() {
               <button 
                 onClick={closeModal}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
+                disabled={isLoading}
               >
                 ×
               </button>
@@ -92,8 +234,12 @@ function Banner() {
                   type="text"
                   className="input input-bordered w-full"
                   placeholder="Ingrese su nombre completo"
+                  disabled={isLoading}
                   {...registerPatient("fullname", { required: "El nombre completo es requerido" })}
                 />
+                {errorsPatient.fullname && (
+                  <p className="text-red-500 text-sm mt-1">{errorsPatient.fullname.message}</p>
+                )}
               </div>
 
               <div>
@@ -104,8 +250,12 @@ function Banner() {
                   type="text"
                   className="input input-bordered w-full"
                   placeholder="Ingrese su documento"
+                  disabled={isLoading}
                   {...registerPatient("document", { required: "El documento es requerido" })}
                 />
+                {errorsPatient.document && (
+                  <p className="text-red-500 text-sm mt-1">{errorsPatient.document.message}</p>
+                )}
               </div>
 
               <div>
@@ -116,6 +266,7 @@ function Banner() {
                   type="email"
                   className="input input-bordered w-full"
                   placeholder="Ingrese su email"
+                  disabled={isLoading}
                   {...registerPatient("email", { 
                     required: "El email es requerido",
                     pattern: {
@@ -124,21 +275,26 @@ function Banner() {
                     }
                   })}
                 />
+                {errorsPatient.email && (
+                  <p className="text-red-500 text-sm mt-1">{errorsPatient.email.message}</p>
+                )}
               </div>
 
               <div className="flex gap-4 pt-4">
                 <button
                   type="button"
                   onClick={closeModal}
+                  disabled={isLoading}
                   className="btn btn-outline flex-1"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
+                  disabled={isLoading}
                   className="btn btn-secondary flex-1"
                 >
-                  Registrar
+                  {isLoading ? 'Registrando...' : 'Registrar'}
                 </button>
               </div>
             </form>
