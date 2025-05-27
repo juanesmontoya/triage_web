@@ -44,6 +44,8 @@ services:
     working_dir: /app
     ports:
       - "3002:3002"
+    environment:
+      MONGODB_URI: mongodb+srv://juanesmontoya92:tdea@electiva2.zd1g5.mongodb.net/triageDb
     volumes:
       - ./python:/app
       - /app/venv

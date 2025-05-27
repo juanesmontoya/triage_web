@@ -6,3 +6,5 @@ const router = Router();
 router.get("/getSymptoms", getSymptoms);
 router.post("/createSymptom", createSymptom);
 router.post("/deleteSymptom/", deleteSymptom);
+
+export default router;
