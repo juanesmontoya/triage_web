@@ -23,7 +23,7 @@ function Register() {
     password: data.password,
   }
   await axios
-    .post("http://localhost:3000/triage/register", userInfo)
+    .post("http://localhost:3000/register", userInfo)
     .then((res) => {
       console.log(res.data);
       if (res.data) {

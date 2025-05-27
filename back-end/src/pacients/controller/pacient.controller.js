@@ -27,11 +27,7 @@ export const createPacient = async (req, res = response) => {
         return res.status(201).json({
             ok: true,
             message: "Pacient created successfully",
-            pacient: {
-                fullname: pacient.fullname,
-                document: pacient.document,
-                email: pacient.email,
-            },
+            pacient,
         });
     } catch (error) {
         return res.status(500).json({ message: error.message });
@@ -50,6 +46,7 @@ export const getPacients = async (req, res = response) => {
         return res.status(500).json({ message: error.message });
     }
 };
+
 
 export const getPacient = async (req, res = response) => {
     const { document } = req.body;

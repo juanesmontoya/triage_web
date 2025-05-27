@@ -79,14 +79,14 @@ export const loginUser = async (req, res = response) => {
     }
 };
 
-export const logoutUser = async (req, res = response) => {
+/* export const logoutUser = async (req, res = response) => {
     //TODO: Logout usuario y remover JWT token desde cookies
     return res.status(200).json({
         ok: true,
         message: 'User logged out successfully'
     });
 }
-
+ */
 export const getUser = async (req, res = response) => {
     const { document } = req.body;
     try {

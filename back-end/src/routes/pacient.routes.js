@@ -4,6 +4,7 @@ import { createPacient, getPacient, getPacients } from "../pacients/controller/p
 
 const router = Router();
 
-router.post("/validateUser", getPacient);
+router.post("/validatePacient", getPacient);
+router.post("/createPacient", createPacient)
 
 export default router;
