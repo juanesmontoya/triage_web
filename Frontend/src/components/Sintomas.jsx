@@ -7,7 +7,7 @@ const Sintomas = () => {
     const [messages, setMessages] = useState([
         {
             id: 1,
-            text: "Hola, soy el asistente médico virtual. ¿Qué síntomas presentas hoy?",
+            text: "Hola, soy el asistente médico virtual. ¿Cual es el motivo de tu consulta?",
             sender: "bot"
         }
     ]);

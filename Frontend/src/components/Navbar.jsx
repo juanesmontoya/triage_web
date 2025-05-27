@@ -52,9 +52,6 @@ function Navbar() {
             <li>
                 <a href="/">Home</a>
             </li>
-            <li>
-                <a href='./sintomas' className="btn btn-outline btn-secondary px-1 text-xs ">Comprueba tus síntomas</a>
-            </li>
             {/* SOLO mostrar Doctor Panel si el usuario está logueado */}
             {isUserLoggedIn() && (
                 <li>

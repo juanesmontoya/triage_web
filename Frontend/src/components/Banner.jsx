@@ -13,6 +13,12 @@ function Banner() {
     setIsModalOpen(true);
   };
 
+  const userExists = (data) => {
+    console.log('Documento ingresado:', data);
+    // Abrir el modal cuando se envía el formulario del documento
+    setIsModalOpen(true);
+  };
+
   const onSubmitPatient = (data) => {
     console.log('Datos del paciente:', data);
     
@@ -40,19 +46,16 @@ function Banner() {
               Utiliza nuestro sistema de triaje automatizado con IA y 
               procesamiento de lenguaje natural para una orientación precisa en minutos.
             </p>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(userExists)}>
               <label className="input input-bordered flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
                   <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
                 </svg>
-                <input 
-                  type="text" 
-                  className="grow" 
-                  placeholder="Ingrese su documento" 
-                  {...register("document", { required: true })}
-                />
               </label>
-              <button type="submit" className="btn mt-4 btn-secondary">Get started</button>
+              <button type="submit" className="btn mt-4 btn-primary">Iniciar triage</button>
+            </form>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <button type="submit" className="btn mt-4 btn-secondary">Registro</button>
             </form>
           </div>
         </div>

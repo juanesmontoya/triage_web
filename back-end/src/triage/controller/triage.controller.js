@@ -2,20 +2,16 @@ import { response } from "express";
 import Triage from "../model/triage.model.js";
 
 export const createTriage = async (req, res = response) => {
-    const { patientId, symptoms, visitDetail } = req.body;
+    const { patientId, visitDetail } = req.body;
     try {
-        let triage = new Triage({ patientId, symptoms, visitDetail});
+        let triage = new Triage({ patientId, visitDetail});
 
         await triage.save();
 
         return res.status(201).json({
             ok: true,
             message: "Triage created successfully",
-            triage: {
-                patientId: triage.patientId,
-                symptoms: triage.symptoms,
-                visitDetail: triage.visitDetail
-            },
+            triage
         });
     } catch (error) {
         return res.status(500).json({ message: error.message });

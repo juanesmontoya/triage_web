@@ -2,6 +2,7 @@ import express from 'express';
 import userRoutes from './routes/user.routes.js';
 import cors from 'cors';
 import pacientRoutes from './routes/pacient.routes.js';
+import triageRoutes from './routes/triage.routes.js';
 
 const app = express();
 
@@ -13,5 +14,7 @@ app.use(express.json());
 
 app.use("/", userRoutes);
 app.use("/pacient", pacientRoutes);
+app.use("/triage", triageRoutes);
+
 
 export default app;

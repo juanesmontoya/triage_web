@@ -17,7 +17,7 @@ function Login() {
             password: data.password,
         };
         await axios
-        .post("http://localhost:3000/triage/login", userInfo)
+        .post("http://localhost:3000/login", userInfo)
         .then((res) => {
             console.log(res.data);
             if (res.data) {
@@ -47,7 +47,7 @@ function Login() {
                 <div className="modal-box">
                     <form onSubmit={handleSubmit(onSubmit)} method="dialog"> 
                         <Link
-                            to="/"
+                            to="/panelmedico"
                             className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
                             onClick={() => document.getElementById("my_modal_3")?.close()}
                         >
