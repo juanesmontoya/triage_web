@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+//linea para guardar cambios
+
 function Banner() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const { register: registerPatient, handleSubmit: handleSubmitPatient, reset: resetPatient, formState: { errors: errorsPatient } } = useForm();
