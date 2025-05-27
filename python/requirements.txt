@@ -1,5 +1,6 @@
 Flask
 pipwin
 SpeechRecognition
+nltk
 pyaudio
 pymongo
