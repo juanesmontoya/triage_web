@@ -4,7 +4,7 @@ def extract_keywords(tokens, keywords_from_db):
     found_keywords = set()
     current_min_level = float('inf')
 
-    keyword_dict = {kw['palabra'].lower(): kw['nivel'] for kw in keywords_from_db}
+    keyword_dict = {kw['symptom'].lower(): kw['triageLevel'] for kw in keywords_from_db}
     max_keyword_length = max(len(kw.split()) for kw in keyword_dict.keys())
 
     for n in range(1, max_keyword_length + 1):

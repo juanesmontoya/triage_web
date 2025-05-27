@@ -8,7 +8,7 @@ const symptomSchema = new mongoose.Schema({
         unique: true
     },
     triageLevel: {
-        type: String,
+        type: Number,
         required: true,
         trim: true
     },
