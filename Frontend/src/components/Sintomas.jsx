@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Send, Home, Volume2, MessageSquare, User, Stethoscope } from 'lucide-react';
 
+// 
+// sintomas
 const Sintomas = () => {
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState('');
