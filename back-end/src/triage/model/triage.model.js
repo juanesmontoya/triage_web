@@ -5,8 +5,17 @@ const triageSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    patientDocument: {
+        type: String,
+        required: true,
+        trim: true
+    },
     doctorId: {
         type: String
+    },
+    doctorDocument: {
+        type: String,
+        trim: true
     },
     symptoms: {
         type: mongoose.Schema.Types.Mixed,
@@ -18,6 +27,7 @@ const triageSchema = new mongoose.Schema({
     },
     triageLevel: {
         type: String,
+        default: '6',
         trim: true
     },
     visitDetail: {

@@ -41,7 +41,8 @@ export const createSymptom = async (req, res = response) => {
 };
 
 export const deleteSymptom = async (req, res = response) => {
-    const symptom = Symptom.findByIdAndDelete(req.params.id);
+    const {symptomId} = req.body; 
+    const symptom = Symptom.findByIdAndDelete(symptomId);
     if (!symptom) {
         return res.status(404).json({
             ok: false,
