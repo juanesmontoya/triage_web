@@ -10,6 +10,7 @@ services:
       APP_PORT: 3000
       MONGODB_URI: mongodb+srv://juanesmontoya92:tdea@electiva2.zd1g5.mongodb.net/triageDb
       JWT_SECRET: anysecret
+      PYTHON_URL: http://python:3002/processData
     volumes:
       - ./back-end:/app
     depends_on:
