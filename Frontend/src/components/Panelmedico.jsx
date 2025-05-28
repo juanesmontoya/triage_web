@@ -28,7 +28,7 @@ const Panelmedico = () => {
             toast.success("Sesión cerrada exitosamente");
             
             setTimeout(() => {
-                window.location.href = "/"; // Redirigir a home
+                window.location.href = "/";
             }, 1500);
         } catch (error) {
             toast.error("Error al cerrar sesión: " + error);
@@ -43,18 +43,25 @@ const Panelmedico = () => {
         }, 3000);
     };
 
-    // Verificar autenticación al cargar
+    // Cargar al inicializar componente
     useEffect(() => {
-        const doctorAuth = localStorage.getItem('doctorAuth');
-        if (doctorAuth === 'true') {
-            loadConversations();
+        loadConversations();
+        
+        // Establecer autenticación del doctor si no existe
+        if (!localStorage.getItem('doctorAuth')) {
+            localStorage.setItem('doctorAuth', 'true');
         }
     }, []);
 
     // Cargar conversaciones desde localStorage
     const loadConversations = () => {
-        const storedConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-        setConversations(storedConversations);
+        try {
+            const storedConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+            setConversations(storedConversations);
+        } catch (error) {
+            console.error('Error cargando conversaciones:', error);
+            setConversations([]);
+        }
     };
 
     // Iniciar edición de información del paciente
@@ -106,7 +113,6 @@ const Panelmedico = () => {
     const generatePDF = () => {
         if (!selectedConversation) return;
 
-        // Crear contenido HTML optimizado para PDF
         const pdfContent = `
             <!DOCTYPE html>
             <html>
@@ -129,10 +135,9 @@ const Panelmedico = () => {
                     .header { 
                         text-align: center; 
                         border-bottom: 3px solid #ff1c98; 
-                        padding-bottom: 20px; 
+                        padding: 20px;
                         margin-bottom: 30px; 
                         background-color: #f8fafc;
-                        padding: 20px;
                         border-radius: 8px;
                     }
                     .header h1 { 
@@ -224,19 +229,6 @@ const Panelmedico = () => {
                         border-top: 1px solid #e5e7eb;
                         padding-top: 20px;
                     }
-                    .score-grid {
-                        display: grid;
-                        grid-template-columns: repeat(3, 1fr);
-                        gap: 10px;
-                        margin-top: 10px;
-                    }
-                    .score-item {
-                        background: rgba(255,255,255,0.7);
-                        padding: 8px;
-                        border-radius: 4px;
-                        text-align: center;
-                        font-weight: bold;
-                    }
                     .print-button {
                         position: fixed;
                         top: 20px;
@@ -270,7 +262,7 @@ const Panelmedico = () => {
                     <div class="section-content">
                         <div class="patient-info">
                             <div><strong>👤 Nombre:</strong><br>${selectedConversation.patientInfo?.name || 'No especificado'}</div>
-                            <div><strong>🎂 Edad:</strong><br>${selectedConversation.patientInfo?.age || 'No especificada'} años</div>
+                            <div><strong>🎂 Edad:</strong><br>${selectedConversation.patientInfo?.age || 'No especificada'}</div>
                             <div><strong>⚧ Género:</strong><br>${selectedConversation.patientInfo?.gender || 'No especificado'}</div>
                             <div><strong>📧 Email:</strong><br>${selectedConversation.patientInfo?.email || 'No especificado'}</div>
                             <div><strong>📱 Teléfono:</strong><br>${selectedConversation.patientInfo?.phone || 'No especificado'}</div>
@@ -294,25 +286,6 @@ const Panelmedico = () => {
                             ${selectedConversation.triageResult?.editedBy ? `
                                 <div style="font-size: 11px; opacity: 0.8; margin-top: 10px;">
                                     ✏️ Editado por: ${selectedConversation.triageResult.editedBy} el ${new Date(selectedConversation.triageResult.editedAt).toLocaleString('es-ES')}
-                                </div>
-                            ` : ''}
-                            ${selectedConversation.triageResult?.score ? `
-                                <div style="margin-top: 15px;">
-                                    <strong>📊 Puntuación de análisis automático:</strong>
-                                    <div class="score-grid">
-                                        <div class="score-item">
-                                            <div>🔴 Alta</div>
-                                            <div>${selectedConversation.triageResult.score.high}</div>
-                                        </div>
-                                        <div class="score-item">
-                                            <div>🟡 Media</div>
-                                            <div>${selectedConversation.triageResult.score.medium}</div>
-                                        </div>
-                                        <div class="score-item">
-                                            <div>🟢 Baja</div>
-                                            <div>${selectedConversation.triageResult.score.low}</div>
-                                        </div>
-                                    </div>
                                 </div>
                             ` : ''}
                         </div>
@@ -360,13 +333,11 @@ const Panelmedico = () => {
             </html>
         `;
 
-        // Crear nueva ventana optimizada para PDF
         const printWindow = window.open('', '_blank');
         if (printWindow) {
             printWindow.document.write(pdfContent);
             printWindow.document.close();
             
-            // Esperar a que cargue y luego mostrar diálogo de impresión
             printWindow.onload = function() {
                 setTimeout(() => {
                     printWindow.print();
@@ -375,7 +346,6 @@ const Panelmedico = () => {
             
             showNotification('Abriendo ventana para guardar como PDF...', 'success');
         } else {
-            // Fallback: descargar como HTML si no se puede abrir ventana
             const blob = new Blob([pdfContent], { type: 'text/html;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -481,7 +451,8 @@ const Panelmedico = () => {
     const filteredConversations = conversations.filter(conversation => {
         const matchesSearch =
             (conversation.patientInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (conversation.sessionId?.toLowerCase().includes(searchTerm.toLowerCase()));
+            (conversation.sessionId?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (conversation.patientInfo?.document?.toLowerCase().includes(searchTerm.toLowerCase()));
 
         const matchesStatus =
             statusFilter === 'all' ||
@@ -494,7 +465,7 @@ const Panelmedico = () => {
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
-        return date.toLocaleString();
+        return date.toLocaleString('es-ES');
     };
 
     return (
@@ -554,6 +525,13 @@ const Panelmedico = () => {
                                     <FileText className="w-16 h-16 mx-auto text-base-content opacity-40" />
                                     <h1 className="text-2xl font-bold mt-4">Seleccione un triaje</h1>
                                     <p className="py-4">Seleccione una conversación de triaje de la lista para ver los detalles y añadir sus notas médicas.</p>
+                                    {conversations.length === 0 && (
+                                        <div className="mt-4 p-4 bg-info bg-opacity-20 rounded-lg">
+                                            <p className="text-sm text-info-content">
+                                                No hay triajes disponibles. Los triajes completados en la página de síntomas aparecerán aquí automáticamente.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -567,7 +545,7 @@ const Panelmedico = () => {
                                 <div className="flex gap-2 flex-wrap">
                                     <button
                                         onClick={generatePDF}
-                                        className="btn btn-sm btn-info gap-1"
+                                        className="btn btn-sm btn-error gap-1"
                                     >
                                         <Download className="w-4 h-4" />
                                         Descargar PDF
@@ -846,17 +824,6 @@ const Panelmedico = () => {
                                                             Editado por: {selectedConversation.triageResult.editedBy} el {formatDate(selectedConversation.triageResult.editedAt)}
                                                         </div>
                                                     )}
-
-                                                    {selectedConversation.triageResult.score && (
-                                                        <div>
-                                                            <div className="font-semibold">Puntuación del análisis automático:</div>
-                                                            <div className="p-2 bg-base-200 rounded-lg mt-1">
-                                                                <div>Alta prioridad: {selectedConversation.triageResult.score.high}</div>
-                                                                <div>Media prioridad: {selectedConversation.triageResult.score.medium}</div>
-                                                                <div>Baja prioridad: {selectedConversation.triageResult.score.low}</div>
-                                                            </div>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -875,7 +842,7 @@ const Panelmedico = () => {
                                     </h3>
 
                                     <div className="space-y-2 max-h-64 overflow-y-auto">
-                                        {selectedConversation.messages ? (
+                                        {selectedConversation.messages && selectedConversation.messages.length > 0 ? (
                                             selectedConversation.messages.map((msg, idx) => (
                                                 <div key={idx} className={`chat ${msg.sender === 'user' ? 'chat-start' : 'chat-end'}`}>
                                                     <div className="chat-header">
@@ -932,7 +899,7 @@ const Panelmedico = () => {
                 <label htmlFor="my-drawer-2" className="drawer-overlay"></label>
                 <div className="menu p-4 w-80 min-h-full bg-base-200 text-base-content">
                     <div className="mb-4">
-                        <h2 className="text-xl font-bold text-primary">Triajes realizados</h2>
+                        <h2 className="text-xl font-bold text-primary">Triajes realizados ({conversations.length})</h2>
 
                         <div className="join w-full mt-4">
                             <div className="join-item w-full">
