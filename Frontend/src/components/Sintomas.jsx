@@ -39,7 +39,7 @@ const Sintomas = () => {
       // Si no hay paciente registrado, redirigir a home
       alert('No hay información de paciente. Redirigiendo al inicio...');
       setTimeout(() => {
-        window.location.href = '/home';
+        window.location.href = '/';
       }, 2000);
       return;
     }
@@ -163,46 +163,136 @@ const Sintomas = () => {
     setChatCompleted(true);
     addBotMessage("Gracias por usar nuestro sistema de triaje. Te hemos registrado en la sala de espera. Un profesional de salud te estará contactando pronto. ¡Cuídate!");
     
-    // Guardar en formato requerido para el backend
+    // Generar sessionId único
+    const sessionId = `triage-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const timestamp = new Date().toISOString();
+    
+    // Datos para el backend (formato original)
     const triageData = {
       patientId: patientInfo._id,
       document: patientInfo.document,
       visitDetail: visitDetail
     };
 
+    // Estructura completa para Panelmedico (compatible)
+    const conversationData = {
+      sessionId: sessionId,
+      patientInfo: {
+        name: patientInfo.fullname,
+        age: patientInfo.age || 'No especificada',
+        gender: patientInfo.gender || 'No especificado',
+        email: patientInfo.email,
+        phone: patientInfo.phone || 'No especificado',
+        document: patientInfo.document
+      },
+      messages: messages,
+      visitDetail: visitDetail,
+      timestamp: timestamp,
+      status: 'pending',
+      triageResult: null, // Se llenará con IA/ML
+      doctorNotes: '',
+      reviewedAt: null,
+      // Datos adicionales para integración con backend
+      backendData: triageData
+    };
+
     setIsLoading(true);
     
-    // Guardar en base de datos real - integrar con tu backend
-    // await axios.post('http://localhost:3000/triage/', triageData)
-    //   .then((response) => {
-    //     if (response.data.ok) {
-    //       console.log('Triage creado:', response.data.triage);
-    //       localStorage.setItem('TriageData', JSON.stringify(triageData));
-    //       setTimeout(() => {
-    //         window.location.href = '/home';
-    //       }, 3000);
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     console.error('Error al crear triage:', error);
-    //     alert('Error al guardar el triaje. Intenta nuevamente.');
-    //   })
-    //   .finally(() => {
-    //     setIsLoading(false);
-    //   });
-    
-    // SIMULACIÓN - Remover cuando integres con backend real
-    setTimeout(() => {
-      console.log('Datos del triage guardados:', triageData);
+    try {
+      // 1. GUARDAR EN BACKEND - Crear registro en base de datos
+      // await axios.post('http://localhost:3000/triage/', triageData)
+      //   .then((response) => {
+      //     if (response.data.ok) {
+      //       console.log('Triage creado en BD:', response.data.triage);
+      //     }
+      //   });
+
+      // 2. ENVIAR A MÓDULO DE IA/ML PYTHON para análisis
+      // const aiAnalysis = await axios.post('http://localhost:5000/analyze-triage', {
+      //   visitDetail: visitDetail,
+      //   patientData: patientInfo
+      // });
+      
+      // // Actualizar con resultado de IA
+      // if (aiAnalysis.data.success) {
+      //   conversationData.triageResult = {
+      //     level: aiAnalysis.data.triageLevel,
+      //     recommendation: aiAnalysis.data.recommendation, 
+      //     color: aiAnalysis.data.priority, // 'error', 'warning', 'info', 'success'
+      //     score: {
+      //       high: aiAnalysis.data.scores.high,
+      //       medium: aiAnalysis.data.scores.medium,
+      //       low: aiAnalysis.data.scores.low
+      //     },
+      //     aiConfidence: aiAnalysis.data.confidence,
+      //     symptoms: aiAnalysis.data.detectedSymptoms
+      //   };
+      // }
+
+      // SIMULACIÓN DEL MÓDULO IA - Remover cuando integres Python real
+      const mockAIResult = generateMockTriageResult(visitDetail);
+      conversationData.triageResult = mockAIResult;
+
+      // 3. GUARDAR EN LOCALSTORAGE PARA PANELMEDICO
+      const existingConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+      existingConversations.push(conversationData);
+      localStorage.setItem('conversations', JSON.stringify(existingConversations));
+      
+      // 4. BACKUP EN LOCALSTORAGE ORIGINAL
       localStorage.setItem('TriageData', JSON.stringify(triageData));
+      
+      console.log('✅ Datos guardados correctamente:', {
+        backend: triageData,
+        conversation: conversationData
+      });
+      
       setIsLoading(false);
       
       // Redirigir a /home después de 3 segundos
       setTimeout(() => {
         alert('Redirigiéndote a la página principal...');
-        window.location.href = '/';
+        window.location.href = '/'
       }, 3000);
-    }, 2000);
+      
+    } catch (error) {
+      console.error('❌ Error al procesar triaje:', error);
+      alert('Error al procesar el triaje. Intenta nuevamente.');
+      setIsLoading(false);
+    }
+  };
+
+  // Función para simular resultado de IA (REMOVER cuando integres Python)
+  const generateMockTriageResult = (visitDetail) => {
+    const text = visitDetail.toLowerCase();
+    let level, color, recommendation;
+    
+    // Lógica básica para simular IA
+    if (text.includes('dolor severo') || text.includes('dificultad respirar') || text.includes('fiebre alta')) {
+      level = 'NIVEL 2 - URGENTE';
+      color = 'warning';
+      recommendation = 'Consulta médica urgente recomendada. Acuda al servicio de urgencias.';
+    } else if (text.includes('dolor') || text.includes('fiebre') || text.includes('náuseas')) {
+      level = 'NIVEL 3 - PRIORITARIO';
+      color = 'info';
+      recommendation = 'Consulta médica en las próximas 24 horas. Monitoree síntomas.';
+    } else {
+      level = 'NIVEL 4 - ESTÁNDAR';
+      color = 'success';
+      recommendation = 'Consulta médica de rutina. Puede programar cita en días próximos.';
+    }
+    
+    return {
+      level: level,
+      recommendation: recommendation,
+      color: color,
+      score: {
+        high: Math.floor(Math.random() * 30),
+        medium: Math.floor(Math.random() * 50),
+        low: Math.floor(Math.random() * 40)
+      },
+      aiGenerated: true,
+      processedAt: new Date().toISOString()
+    };
   };
 
   // Iniciar grabación de voz
@@ -276,7 +366,7 @@ const Sintomas = () => {
             </div>
             <button
               onClick={goHome}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-pink-500 transition-colors" 
             >
               <Home className="w-4 h-4" />
               Inicio
