@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Send, Home, Volume2, MessageSquare, User, Stethoscope } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Sintomas = () => {
   const [messages, setMessages] = useState([]);
@@ -37,7 +38,7 @@ const Sintomas = () => {
       console.log('Paciente cargado:', patient);
     } else {
       // Si no hay paciente registrado, redirigir a home
-      alert('No hay información de paciente. Redirigiendo al inicio...');
+      toast.alert('No hay información de paciente. Redirigiendo al inicio...');
       setTimeout(() => {
         window.location.href = '/';
       }, 2000);

@@ -1,30 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, AlertTriangle, User, Search, LogOut, RefreshCw, FileText, Calendar, Download, Edit, Save, X } from 'lucide-react';
-
-function Logout() {
-    const handleLogout = () => {
-        try {
-            localStorage.removeItem("Users");
-            localStorage.removeItem("doctorAuth");
-            
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } catch (error) {
-            console.error("Error during logout:", error);
-        }
-    };
-    return (
-        <div>
-            <button className='px-3 py-2 bg-red-500 text-white rounded-md cursor-pointer'
-                onClick={handleLogout}>
-                Logout
-            </button>
-        </div>
-    )
-}
-
-export { Logout }
+import { useAuth } from '../context/AuthProvider';
+import toast from 'react-hot-toast';
 
 const Panelmedico = () => {
     const [conversations, setConversations] = useState([]);
@@ -37,6 +14,26 @@ const Panelmedico = () => {
     const [isEditingPatient, setIsEditingPatient] = useState(false);
     const [editedPatient, setEditedPatient] = useState({});
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+    const [authUser, setAuthUser] = useAuth();
+
+    // Función de logout personalizada para redirigir a home
+    const handleLogout = () => {
+        try {
+            setAuthUser({
+                ...authUser,
+                user: null,
+            });
+            localStorage.removeItem("Users");
+            localStorage.removeItem("doctorAuth");
+            toast.success("Sesión cerrada exitosamente");
+            
+            setTimeout(() => {
+                window.location.href = "/"; // Redirigir a home
+            }, 1500);
+        } catch (error) {
+            toast.error("Error al cerrar sesión: " + error);
+        }
+    };
 
     // Función para mostrar notificaciones
     const showNotification = (message, type = 'success') => {
@@ -510,11 +507,30 @@ const Panelmedico = () => {
                         <div className="text-xl font-bold text-secondary">Panel Médico de Triaje</div>
                     </div>
                     <div className="flex-none">
-                        <button className="btn btn-ghost" onClick={loadConversations}>
-                            <RefreshCw className="w-5 h-5" />
-                        </button>
-                        <label htmlFor="my-drawer-2" className="btn btn-primary drawer-button lg:hidden">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
+                        <div className="flex items-center gap-2">
+                            <button 
+                                className="btn btn-ghost gap-2" 
+                                onClick={loadConversations}
+                                title="Actualizar lista de triajes"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                                <span className="hidden sm:inline">Actualizar</span>
+                            </button>
+                            
+                            <button 
+                                className="btn btn-error gap-2 text-white" 
+                                onClick={handleLogout}
+                                title="Cerrar sesión"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                <span className="hidden sm:inline">Logout</span>
+                            </button>
+                        </div>
+                        
+                        <label htmlFor="my-drawer-2" className="btn btn-primary drawer-button lg:hidden ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+                            </svg>
                         </label>
                     </div>
                 </div>

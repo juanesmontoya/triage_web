@@ -186,7 +186,7 @@ function Banner() {
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="btn btn-primary flex-1 sm:flex-none sm:min-w-[140px]"
+                  className="btn btn-info flex-1 sm:flex-none sm:min-w-[140px]"
                 >
                   {isLoading ? 'Verificando...' : 'Iniciar Triage'}
                 </button>
