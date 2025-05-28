@@ -34,6 +34,8 @@ const Panelmedico = () => {
     const [notes, setNotes] = useState('');
     const [isEditingTriage, setIsEditingTriage] = useState(false);
     const [editedTriage, setEditedTriage] = useState({});
+    const [isEditingPatient, setIsEditingPatient] = useState(false);
+    const [editedPatient, setEditedPatient] = useState({});
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
 
     // Función para mostrar notificaciones
@@ -56,6 +58,51 @@ const Panelmedico = () => {
     const loadConversations = () => {
         const storedConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
         setConversations(storedConversations);
+    };
+
+    // Iniciar edición de información del paciente
+    const startEditingPatient = () => {
+        setEditedPatient({
+            name: selectedConversation.patientInfo?.name || '',
+            age: selectedConversation.patientInfo?.age || '',
+            gender: selectedConversation.patientInfo?.gender || '',
+            email: selectedConversation.patientInfo?.email || '',
+            phone: selectedConversation.patientInfo?.phone || '',
+            document: selectedConversation.patientInfo?.document || ''
+        });
+        setIsEditingPatient(true);
+    };
+
+    // Guardar cambios en la información del paciente
+    const savePatientChanges = () => {
+        if (selectedConversation) {
+            const updatedPatientInfo = {
+                ...selectedConversation.patientInfo,
+                ...editedPatient
+            };
+
+            const updatedConversation = {
+                ...selectedConversation,
+                patientInfo: updatedPatientInfo
+            };
+
+            const updatedConversations = conversations.map(conv =>
+                conv.sessionId === selectedConversation.sessionId ? updatedConversation : conv
+            );
+
+            setConversations(updatedConversations);
+            setSelectedConversation(updatedConversation);
+            localStorage.setItem('conversations', JSON.stringify(updatedConversations));
+
+            setIsEditingPatient(false);
+            showNotification('Información del paciente actualizada correctamente', 'success');
+        }
+    };
+
+    // Cancelar edición de paciente
+    const cancelEditPatient = () => {
+        setIsEditingPatient(false);
+        setEditedPatient({});
     };
 
     // Función para generar y descargar PDF
@@ -230,6 +277,7 @@ const Panelmedico = () => {
                             <div><strong>⚧ Género:</strong><br>${selectedConversation.patientInfo?.gender || 'No especificado'}</div>
                             <div><strong>📧 Email:</strong><br>${selectedConversation.patientInfo?.email || 'No especificado'}</div>
                             <div><strong>📱 Teléfono:</strong><br>${selectedConversation.patientInfo?.phone || 'No especificado'}</div>
+                            <div><strong>🆔 Documento:</strong><br>${selectedConversation.patientInfo?.document || 'No especificado'}</div>
                             <div><strong>🕐 Fecha consulta:</strong><br>${new Date(selectedConversation.timestamp).toLocaleString('es-ES')}</div>
                         </div>
                     </div>
@@ -383,7 +431,7 @@ const Panelmedico = () => {
         }
     };
 
-    // Cancelar edición
+    // Cancelar edición de triaje
     const cancelEditTriage = () => {
         setIsEditingTriage(false);
         setEditedTriage({});
@@ -394,6 +442,7 @@ const Panelmedico = () => {
         setSelectedConversation(conversation);
         setNotes(conversation.doctorNotes || '');
         setIsEditingTriage(false);
+        setIsEditingPatient(false);
     };
 
     // Actualizar estado de una conversación
@@ -464,10 +513,6 @@ const Panelmedico = () => {
                         <button className="btn btn-ghost" onClick={loadConversations}>
                             <RefreshCw className="w-5 h-5" />
                         </button>
-                        {/*<button onClick={Logout} className="btn btn-ghost">
-                            <LogOut className="w-5 h-5" />
-                            <span className="hidden md:inline ml-2">Cerrar sesión</span>
-                        </button>*/}
                         <label htmlFor="my-drawer-2" className="btn btn-primary drawer-button lg:hidden">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
                         </label>
@@ -531,28 +576,155 @@ const Panelmedico = () => {
                             {/* Patient info */}
                             <div className="card bg-base-100 shadow">
                                 <div className="card-body">
-                                    <h3 className="card-title">
-                                        <User className="w-5 h-5" />
-                                        Información del Paciente
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <div className="stat-title">Nombre</div>
-                                            <div className="stat-value text-lg">{selectedConversation.patientInfo?.name || 'No especificado'}</div>
-                                        </div>
-                                        <div>
-                                            <div className="stat-title">Edad</div>
-                                            <div className="stat-value text-lg">{selectedConversation.patientInfo?.age || 'No especificada'}</div>
-                                        </div>
-                                        <div>
-                                            <div className="stat-title">Género</div>
-                                            <div className="stat-value text-lg">{selectedConversation.patientInfo?.gender || 'No especificado'}</div>
-                                        </div>
-                                        <div>
-                                            <div className="stat-title">Teléfono</div>
-                                            <div className="stat-value text-lg">{selectedConversation.patientInfo?.phone || 'No especificado'}</div>
-                                        </div>
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="card-title">
+                                            <User className="w-5 h-5" />
+                                            Información del Paciente
+                                        </h3>
+                                        {!isEditingPatient && (
+                                            <button
+                                                onClick={startEditingPatient}
+                                                className="btn btn-sm btn-outline gap-1"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                                Editar
+                                            </button>
+                                        )}
                                     </div>
+
+                                    {isEditingPatient ? (
+                                        <div className="space-y-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="label">
+                                                        <span className="label-text font-semibold">Nombre Completo:</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={editedPatient.name}
+                                                        onChange={(e) => setEditedPatient({...editedPatient, name: e.target.value})}
+                                                        className="input input-bordered w-full"
+                                                        placeholder="Nombre del paciente"
+                                                    />
+                                                </div>
+                                                
+                                                <div>
+                                                    <label className="label">
+                                                        <span className="label-text font-semibold">Edad:</span>
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={editedPatient.age}
+                                                        onChange={(e) => setEditedPatient({...editedPatient, age: e.target.value})}
+                                                        className="input input-bordered w-full"
+                                                        placeholder="Edad en años"
+                                                        min="0"
+                                                        max="120"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="label">
+                                                        <span className="label-text font-semibold">Género:</span>
+                                                    </label>
+                                                    <select
+                                                        value={editedPatient.gender}
+                                                        onChange={(e) => setEditedPatient({...editedPatient, gender: e.target.value})}
+                                                        className="select select-bordered w-full"
+                                                    >
+                                                        <option value="">Seleccionar género</option>
+                                                        <option value="Masculino">Masculino</option>
+                                                        <option value="Femenino">Femenino</option>
+                                                        <option value="Otro">Otro</option>
+                                                        <option value="Prefiero no decir">Prefiero no decir</option>
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className="label">
+                                                        <span className="label-text font-semibold">Teléfono:</span>
+                                                    </label>
+                                                    <input
+                                                        type="tel"
+                                                        value={editedPatient.phone}
+                                                        onChange={(e) => setEditedPatient({...editedPatient, phone: e.target.value})}
+                                                        className="input input-bordered w-full"
+                                                        placeholder="Número de teléfono"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="label">
+                                                        <span className="label-text font-semibold">Email:</span>
+                                                    </label>
+                                                    <input
+                                                        type="email"
+                                                        value={editedPatient.email}
+                                                        onChange={(e) => setEditedPatient({...editedPatient, email: e.target.value})}
+                                                        className="input input-bordered w-full"
+                                                        placeholder="Correo electrónico"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="label">
+                                                        <span className="label-text font-semibold">Documento:</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={editedPatient.document}
+                                                        onChange={(e) => setEditedPatient({...editedPatient, document: e.target.value})}
+                                                        className="input input-bordered w-full"
+                                                        placeholder="Número de documento"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-2 pt-4">
+                                                <button
+                                                    onClick={savePatientChanges}
+                                                    className="btn btn-success gap-1"
+                                                >
+                                                    <Save className="w-4 h-4" />
+                                                    Guardar Cambios
+                                                </button>
+                                                <button
+                                                    onClick={cancelEditPatient}
+                                                    className="btn btn-outline gap-1"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="stat-title">Nombre</div>
+                                                <div className="stat-value text-lg">{selectedConversation.patientInfo?.name || 'No especificado'}</div>
+                                            </div>
+                                            <div>
+                                                <div className="stat-title">Edad</div>
+                                                <div className="stat-value text-lg">{selectedConversation.patientInfo?.age || 'No especificada'}</div>
+                                            </div>
+                                            <div>
+                                                <div className="stat-title">Género</div>
+                                                <div className="stat-value text-lg">{selectedConversation.patientInfo?.gender || 'No especificado'}</div>
+                                            </div>
+                                            <div>
+                                                <div className="stat-title">Teléfono</div>
+                                                <div className="stat-value text-lg">{selectedConversation.patientInfo?.phone || 'No especificado'}</div>
+                                            </div>
+                                            <div>
+                                                <div className="stat-title">Email</div>
+                                                <div className="stat-value text-lg">{selectedConversation.patientInfo?.email || 'No especificado'}</div>
+                                            </div>
+                                            <div>
+                                                <div className="stat-title">Documento</div>
+                                                <div className="stat-value text-lg">{selectedConversation.patientInfo?.document || 'No especificado'}</div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
