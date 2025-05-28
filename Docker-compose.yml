@@ -15,6 +15,9 @@ services:
       - ./back-end:/app
     depends_on:
       - mongo_db
+      - python
+    networks:
+      - triage-network
 
   mongo_db:
     container_name: triage_web-mongo_db
@@ -50,8 +53,12 @@ services:
     volumes:
       - ./python:/app
       - /app/venv
-    depends_on:
-      - api
+    networks:
+      - triage-network
 
 volumes:
   mongo_data: {}
+
+networks:
+  triage-network:
+    driver: bridge

@@ -3,4 +3,4 @@ SpeechRecognition
 nltk
 pymongo
 python-dotenv
-unicodedata
+unicode
