@@ -18,8 +18,8 @@ const triageSchema = new mongoose.Schema({
         trim: true
     },
     symptoms: {
-        type: mongoose.Schema.Types.Mixed,
-        trim: true
+        type: [String],
+        default: []
     },
     diagnosis: {
         type: String,

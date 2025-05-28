@@ -1,5 +1,13 @@
 import { response } from "express";
 import Triage from "../model/triage.model.js";
+import { exec as execCb} from "child_process";
+import { promisify } from 'util';
+import path from "path";
+import { fileURLToPath } from 'url';
+
+const exec = promisify(execCb);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const createTriage = async (req, res = response) => {
     const { patientId, patientDocument, visitDetail } = req.body;
@@ -9,9 +17,7 @@ export const createTriage = async (req, res = response) => {
             patientDocument,
             doctorId: '', // Initially no doctor assigned
             doctorDocument: '', // Initially no doctor assigned
-            symptoms: {}, // Initially no symptoms
             diagnosis: '', // Initially no diagnosis
-            triageLevel: 6, // Default triage level
             state: 'Open', // Default state
             visitDetail
         });
@@ -22,7 +28,38 @@ export const createTriage = async (req, res = response) => {
 
         await triage.save();
 
-        //activar python modules
+        // Usar ruta absoluta al script Python
+        const pythonScriptPath = path.resolve(__dirname, '../../../../Python/main.py');
+
+        // Ejecutar el módulo Python pasando el texto (visitDetail)
+        const pythonCommand = `python "${pythonScriptPath}" "${visitDetail}"`;
+
+        const { stdout, stderr } = await exec(pythonCommand);
+
+        if (stderr) {
+            console.error(`Error en Python: ${stderr}`);
+        }
+
+        let parsed;
+
+        try {
+            parsed = JSON.parse(stdout);
+        } catch (parseError) {
+            console.error('Error parseando salida Python:', parseError.message);
+            return res.status(500).json({ ok: false, message: 'Error parseando resultado de Python' });
+        }
+
+        const { found_keywords, triage_level } = parsed;
+
+        // Aseguramos defaults por si vienen vacíos
+        const safeKeywords = Array.isArray(found_keywords) ? found_keywords : [];
+        const safeTriageLevel = typeof triage_level === 'number' ? triage_level : 6;
+
+        // Actualizar triage con datos obtenidos de Python
+        await Triage.findByIdAndUpdate(triage._id, {
+            symptoms: safeKeywords,
+            triageLevel: safeTriageLevel
+        });
 
         return res.status(201).json({
             ok: true,
