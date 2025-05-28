@@ -135,11 +135,43 @@ const Sintomas = () => {
         if (res.data) {
           toast.success("Triage creado exitosamente!");
           
+          // Guardar para compatibilidad (formato original)
+          localStorage.setItem("TriageData", JSON.stringify(res.data.triage));
+          
+          // Crear estructura para Panel Médico
+          const conversationData = {
+            sessionId: res.data.triage._id || Date.now().toString(),
+            patientInfo: {
+              name: patientInfo.fullname,
+              age: patientInfo.age || 'No especificada',
+              gender: patientInfo.gender || 'No especificado',
+              email: patientInfo.email,
+              phone: patientInfo.phone || 'No especificado',
+              document: patientInfo.document
+            },
+            messages: messages, // Los mensajes del chat
+            triageResult: {
+              level: `NIVEL ${res.data.triage.triageLevel || 6} - EVALUACIÓN AUTOMÁTICA`,
+              recommendation: res.data.triage.visitDetail || userResponse,
+              color: res.data.triage.triageLevel <= 2 ? 'error' : 
+                     res.data.triage.triageLevel <= 4 ? 'warning' : 'success',
+              score: null // Sin score automático por ahora
+            },
+            timestamp: new Date().toISOString(),
+            status: 'pending', // Estado inicial
+            doctorNotes: '', // Sin notas iniciales
+            reviewedAt: null
+          };
+
+          // Agregar a la lista de conversaciones para Panel Médico
+          const existingConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+          const updatedConversations = [...existingConversations, conversationData];
+          localStorage.setItem('conversations', JSON.stringify(updatedConversations));
+          
           setTimeout(() => {
             window.location.href = '/';
           }, 3000);
         }
-        localStorage.setItem("TriageData", JSON.stringify(res.data.triage));
       })
       .catch((err) => {
         if (err.response) {
