@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Send, Home, Volume2, MessageSquare, User, Stethoscope } from 'lucide-react';
+import { Mic, MicOff, Send, Home, Volume2, User, Stethoscope } from 'lucide-react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const Sintomas = () => {
@@ -8,49 +9,33 @@ const Sintomas = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [chatCompleted, setChatCompleted] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   const [patientInfo, setPatientInfo] = useState(null);
   const [visitDetail, setVisitDetail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  // Preguntas estructuradas
-  const questions = [
-    "¡Hola! Soy tu asistente virtual de triaje. Vamos a evaluar tus síntomas. ¿Tienes dolor en alguna parte del cuerpo?",
-    //"¿El dolor es intenso o severo?",
-    //"¿Tienes fiebre o te sientes con temperatura elevada?",
-    //"¿Tienes dificultad para respirar?",
-    //"¿Sientes náuseas o has vomitado?",
-    //"¿Tienes dolor de cabeza?",
-    //"¿Has tenido estos síntomas por más de 24 horas?",
-    //"¿Deseas agregar algo más sobre tus síntomas?"
-  ];
+  // Pregunta única para el triage
+  const triageQuestion = "¡Hola! Soy tu asistente virtual de triaje. Por favor, describe detalladamente todos los síntomas que estás experimentando y cualquier malestar que sientes. Puedes hablar o escribir tu respuesta.";
 
   // Obtener información del paciente al cargar
   useEffect(() => {
-    // Obtener datos reales del paciente desde localStorage (guardados en Banner.jsx)
     const savedPatient = localStorage.getItem('Patient');
     if (savedPatient) {
       const patient = JSON.parse(savedPatient);
       setPatientInfo(patient);
-      console.log('Paciente cargado:', patient);
     } else {
-      // Si no hay paciente registrado, redirigir a home
-      toast.alert('No hay información de paciente. Redirigiendo al inicio...');
+      toast.error('No hay información de paciente. Redirigiendo al inicio...');
       setTimeout(() => {
         window.location.href = '/';
       }, 2000);
       return;
     }
 
-    // Inicializar reconocimiento de voz
     initializeSpeechRecognition();
     
-    // Iniciar con la primera pregunta
     setTimeout(() => {
-      addBotMessage(questions[0]);
+      addBotMessage(triageQuestion);
     }, 1000);
 
     return () => {
@@ -86,11 +71,10 @@ const Sintomas = () => {
         setIsRecording(false);
       };
 
-      recognitionRef.current.onerror = (event) => {
-        console.error('Error de reconocimiento:', event.error);
+      recognitionRef.current.onerror = () => {
         setIsListening(false);
         setIsRecording(false);
-        alert('Error en el reconocimiento de voz. Intenta de nuevo.');
+        toast.error('Error en el reconocimiento de voz. Intenta de nuevo.');
       };
 
       recognitionRef.current.onend = () => {
@@ -98,8 +82,7 @@ const Sintomas = () => {
         setIsRecording(false);
       };
     } else {
-      console.error('Reconocimiento de voz no soportado');
-      alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.');
+      toast.error('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.');
     }
   };
 
@@ -117,7 +100,6 @@ const Sintomas = () => {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'es-ES';
-      utterance.volume = 0;
       utterance.rate = 0.9;
       speechSynthesis.speak(utterance);
     }
@@ -132,169 +114,39 @@ const Sintomas = () => {
       timestamp: new Date().toLocaleTimeString()
     };
     setMessages(prev => [...prev, newMessage]);
-    
-    // Agregar respuesta a visitDetail
-    setVisitDetail(prev => prev + `P: ${questions[currentStep]} R: ${text}\n`);
+    setVisitDetail(text);
   };
 
-  // Manejar respuesta del usuario
-  const handleUserResponse = (response) => {
-    addUserMessage(response);
-    
-    // Avanzar al siguiente paso
-    if (currentStep < questions.length - 1) {
-      setTimeout(() => {
-        setCurrentStep(prev => prev + 1);
-        addBotMessage(questions[currentStep + 1]);
-      }, 1500);
-    } else {
-      // Última pregunta sobre agregar más información
-      setTimeout(() => {
-        if (response.toLowerCase().includes('sí') || response.toLowerCase().includes('si')) {
-          addBotMessage("Por favor, cuéntame qué más síntomas o información consideras importante:");
-          setCurrentStep(-1); // Modo libre
-        } else {
-          finalizarChat();
-        }
-      }, 1500);
-    }
-  };
-
-  // Finalizar chat y guardar información
-  const finalizarChat = async () => {
+  // Finalizar chat y enviar al backend
+  const finalizarChat = async (userResponse) => {
     setChatCompleted(true);
-    addBotMessage("Gracias por usar nuestro sistema de triaje. Te hemos registrado en la sala de espera. Un profesional de salud te estará contactando pronto. ¡Cuídate!");
+    addBotMessage("Gracias por proporcionar esta información. Estamos procesando tu consulta y te hemos registrado en la sala de espera. Un profesional de salud te estará contactando pronto. ¡Cuídate!");
     
-    // Generar sessionId único
-    const sessionId = `triage-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const timestamp = new Date().toISOString();
-    
-    // Datos para el backend (formato original)
-    const triageData = {
+    const triageInfo = {
       patientId: patientInfo._id,
       patientDocument: patientInfo.document,
-      visitDetail: visitDetail
+      visitDetail: userResponse
     };
 
-    // Estructura completa para Panelmedico (compatible)
-    const conversationData = {
-      sessionId: sessionId,
-      patientInfo: {
-        name: patientInfo.fullname,
-        age: patientInfo.age || 'No especificada',
-        gender: patientInfo.gender || 'No especificado',
-        email: patientInfo.email,
-        phone: patientInfo.phone || 'No especificado',
-        document: patientInfo.document
-      },
-      messages: messages,
-      visitDetail: visitDetail,
-      timestamp: timestamp,
-      status: 'pending',
-      triageResult: null, // Se llenará con IA/ML
-      doctorNotes: '',
-      reviewedAt: null,
-      // Datos adicionales para integración con backend
-      backendData: triageData
-    };
-
-    setIsLoading(true);
-    
-    try {
-      // 1. GUARDAR EN BACKEND - Crear registro en base de datos
-      // await axios.post('http://localhost:3000/triage/', triageData)
-      //   .then((response) => {
-      //     if (response.data.ok) {
-      //       console.log('Triage creado en BD:', response.data.triage);
-      //     }
-      //   });
-
-      // 2. ENVIAR A MÓDULO DE IA/ML PYTHON para análisis
-      // const aiAnalysis = await axios.post('http://localhost:5000/analyze-triage', {
-      //   visitDetail: visitDetail,
-      //   patientData: patientInfo
-      // });
-      
-      // // Actualizar con resultado de IA
-      // if (aiAnalysis.data.success) {
-      //   conversationData.triageResult = {
-      //     level: aiAnalysis.data.triageLevel,
-      //     recommendation: aiAnalysis.data.recommendation, 
-      //     color: aiAnalysis.data.priority, // 'error', 'warning', 'info', 'success'
-      //     score: {
-      //       high: aiAnalysis.data.scores.high,
-      //       medium: aiAnalysis.data.scores.medium,
-      //       low: aiAnalysis.data.scores.low
-      //     },
-      //     aiConfidence: aiAnalysis.data.confidence,
-      //     symptoms: aiAnalysis.data.detectedSymptoms
-      //   };
-      // }
-
-      // SIMULACIÓN DEL MÓDULO IA - Remover cuando integres Python real
-      const mockAIResult = generateMockTriageResult(visitDetail);
-      conversationData.triageResult = mockAIResult;
-
-      // 3. GUARDAR EN LOCALSTORAGE PARA PANELMEDICO
-      const existingConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-      existingConversations.push(conversationData);
-      localStorage.setItem('conversations', JSON.stringify(existingConversations));
-      
-      // 4. BACKUP EN LOCALSTORAGE ORIGINAL
-      localStorage.setItem('TriageData', JSON.stringify(triageData));
-      
-      console.log('✅ Datos guardados correctamente:', {
-        backend: triageData,
-        conversation: conversationData
+    await axios
+      .post("http://localhost:3000/triage/create", triageInfo)
+      .then((res) => {
+        console.log(res.data);
+        if (res.data) {
+          toast.success("Triage creado exitosamente!");
+          
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 3000);
+        }
+        localStorage.setItem("TriageData", JSON.stringify(res.data.triage));
+      })
+      .catch((err) => {
+        if (err.response) {
+          console.log(err);
+          toast.error("Error: " + err.response.data.message);
+        }
       });
-      
-      setIsLoading(false);
-      
-      // Redirigir a /home después de 3 segundos
-      setTimeout(() => {
-        alert('Redirigiéndote a la página principal...');
-        window.location.href = '/'
-      }, 3000);
-      
-    } catch (error) {
-      console.error('❌ Error al procesar triaje:', error);
-      alert('Error al procesar el triaje. Intenta nuevamente.');
-      setIsLoading(false);
-    }
-  };
-
-  // Función para simular resultado de IA (REMOVER cuando integres Python)
-  const generateMockTriageResult = (visitDetail) => {
-    const text = visitDetail.toLowerCase();
-    let level, color, recommendation;
-    
-    // Lógica básica para simular IA
-    if (text.includes('dolor severo') || text.includes('dificultad respirar') || text.includes('fiebre alta')) {
-      level = 'NIVEL 2 - URGENTE';
-      color = 'warning';
-      recommendation = 'Consulta médica urgente recomendada. Acuda al servicio de urgencias.';
-    } else if (text.includes('dolor') || text.includes('fiebre') || text.includes('náuseas')) {
-      level = 'NIVEL 3 - PRIORITARIO';
-      color = 'info';
-      recommendation = 'Consulta médica en las próximas 24 horas. Monitoree síntomas.';
-    } else {
-      level = 'NIVEL 4 - ESTÁNDAR';
-      color = 'success';
-      recommendation = 'Consulta médica de rutina. Puede programar cita en días próximos.';
-    }
-    
-    return {
-      level: level,
-      recommendation: recommendation,
-      color: color,
-      score: {
-        high: Math.floor(Math.random() * 30),
-        medium: Math.floor(Math.random() * 50),
-        low: Math.floor(Math.random() * 40)
-      },
-      aiGenerated: true,
-      processedAt: new Date().toISOString()
-    };
   };
 
   // Iniciar grabación de voz
@@ -315,33 +167,24 @@ const Sintomas = () => {
 
   // Enviar mensaje
   const sendMessage = () => {
-    if (currentMessage.trim() === '') return;
+    if (currentMessage.trim() === '' || chatCompleted) return;
 
-    if (currentStep === -1) {
-      // Modo libre - agregar información adicional
-      addUserMessage(currentMessage);
-      setVisitDetail(prev => prev + `Información adicional: ${currentMessage}\n`);
-      setCurrentMessage('');
-      
+    const userResponse = currentMessage.trim();
+    
+    if (!patientInfo || !patientInfo._id || !patientInfo.document) {
+      toast.error('Error: Información del paciente incompleta. Redirigiendo al inicio...');
       setTimeout(() => {
-        finalizarChat();
-      }, 1000);
-    } else {
-      // Preguntas estructuradas
-      handleUserResponse(currentMessage);
-      setCurrentMessage('');
-    }
-  };
-
-  // Respuesta rápida Sí/No
-  const quickResponse = (response) => {
-    if (currentStep === -1) {
-      if (response === 'No') {
-        finalizarChat();
-      }
+        window.location.href = '/';
+      }, 2000);
       return;
     }
-    handleUserResponse(response);
+
+    addUserMessage(userResponse);
+    setCurrentMessage('');
+    
+    setTimeout(() => {
+      finalizarChat(userResponse);
+    }, 1000);
   };
 
   // Ir al inicio
@@ -368,7 +211,7 @@ const Sintomas = () => {
             </div>
             <button
               onClick={goHome}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-pink-500 transition-colors" 
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <Home className="w-4 h-4" />
               Inicio
@@ -415,25 +258,7 @@ const Sintomas = () => {
           {/* Input Area */}
           {!chatCompleted && (
             <div className="p-6 bg-white border-t">
-              {/* Quick Response Buttons */}
-              {currentStep >= 0 && currentStep < questions.length - 1 && (
-                <div className="flex gap-3 mb-4 justify-center">
-                  <button
-                    onClick={() => quickResponse('Sí')}
-                    className="px-8 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 font-semibold text-lg shadow-lg transition-all"
-                  >
-                    ✅ Sí
-                  </button>
-                  <button
-                    onClick={() => quickResponse('No')}
-                    className="px-8 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 font-semibold text-lg shadow-lg transition-all"
-                  >
-                    ❌ No
-                  </button>
-                </div>
-              )}
-
-              {/* Voice Input - GRANDE Y VISIBLE */}
+              {/* Voice Input */}
               <div className="flex justify-center mb-6">
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
@@ -442,7 +267,7 @@ const Sintomas = () => {
                       ? 'bg-red-500 animate-pulse scale-110' 
                       : 'bg-blue-500 hover:bg-blue-600 hover:scale-105'
                   }`}
-                  disabled={isLoading}
+                  disabled={false}
                 >
                   {isRecording ? (
                     <div className="text-center">
@@ -461,7 +286,7 @@ const Sintomas = () => {
               <div className="text-center mb-6">
                 <p className="text-xl font-bold text-gray-700 mb-2">
                   {isRecording 
-                    ? '🎤 Escuchando... Habla ahora' 
+                    ? '🎤 Escuchando... Describe tus síntomas ahora' 
                     : '🎤 Presiona el botón azul para hablar'
                   }
                 </p>
@@ -482,36 +307,25 @@ const Sintomas = () => {
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="O escribe tu respuesta aquí..."
+                  placeholder="Describe tus síntomas aquí..."
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  disabled={isLoading}
+                  disabled={false}
                 />
                 <button
                   onClick={sendMessage}
                   className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 flex items-center gap-2 font-semibold transition-all disabled:opacity-50"
-                  disabled={!currentMessage.trim() || isLoading}
+                  disabled={!currentMessage.trim()}
                 >
                   <Send className="w-5 h-5" />
                   Enviar
                 </button>
               </div>
 
-              {/* Status Messages */}
-              {currentStep === questions.length - 1 && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                  <p className="text-blue-800 text-center font-semibold">
-                    💡 Esta es la última pregunta. Después podrás agregar información adicional.
-                  </p>
-                </div>
-              )}
-
-              {currentStep === -1 && (
-                <div className="mt-4 p-4 bg-green-50 rounded-xl border border-green-200">
-                  <p className="text-green-800 text-center font-semibold">
-                    📝 Agrega cualquier información adicional que consideres importante.
-                  </p>
-                </div>
-              )}
+              <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <p className="text-blue-800 text-center font-semibold">
+                  💡 Describe todos tus síntomas de manera detallada para obtener la mejor evaluación.
+                </p>
+              </div>
             </div>
           )}
 
@@ -520,38 +334,23 @@ const Sintomas = () => {
             <div className="p-8 bg-green-50 border-t">
               <div className="text-center">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  {isLoading ? (
-                    <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Volume2 className="w-10 h-10 text-green-600" />
-                  )}
+                  <Volume2 className="w-10 h-10 text-green-600" />
                 </div>
                 <h3 className="text-2xl font-bold text-green-800 mb-4">
                   ✅ Evaluación Completada
                 </h3>
                 <p className="text-lg text-green-700 mb-4">
-                  {isLoading 
-                    ? 'Guardando información en el sistema...' 
-                    : 'Información guardada exitosamente.'
-                  }
+                  Información guardada exitosamente. Serás redirigido al inicio.
                 </p>
                 <div className="bg-white p-4 rounded-xl shadow-md max-w-md mx-auto">
                   <p className="text-sm text-gray-600 mb-2">
-                    <strong>Datos que se guardarán:</strong>
+                    <strong>Datos registrados:</strong>
                   </p>
                   <div className="text-xs text-gray-500 text-left">
-                    <p><strong>• Paciente ID:</strong> {patientInfo?._id}</p>
+                    <p><strong>• Paciente:</strong> {patientInfo?.fullname}</p>
                     <p><strong>• Documento:</strong> {patientInfo?.document}</p>
-                    <p><strong>• Nombre:</strong> {patientInfo?.fullname}</p>
-                    <p><strong>• Email:</strong> {patientInfo?.email}</p>
-                    <p><strong>• Detalles:</strong> {visitDetail.length} caracteres</p>
+                    <p><strong>• Síntomas:</strong> {visitDetail.length} caracteres</p>
                   </div>
-                  {visitDetail && (
-                    <div className="mt-3 p-2 bg-gray-50 rounded text-xs text-gray-600 max-h-20 overflow-y-auto">
-                      <strong>Resumen de síntomas:</strong><br/>
-                      {visitDetail.substring(0, 200)}...
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
