@@ -8,3 +8,5 @@ RUN python -m nltk.downloader punkt punkt_tab
 COPY . .
 
 EXPOSE 3002
+
+CMD ["python", "main.py"]
