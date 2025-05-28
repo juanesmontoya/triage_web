@@ -1,556 +1,473 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid'; // instalar: npm install uuid
+import { Mic, MicOff, Send, Home, Volume2, MessageSquare, User, Stethoscope } from 'lucide-react';
 
 const Sintomas = () => {
-    const [messages, setMessages] = useState([
-        {
-            id: 1,
-            text: "Hola, soy el asistente médico virtual. ¿Cual es el motivo de tu consulta?",
-            sender: "bot"
-        }
-    ]);
-    const [inputText, setInputText] = useState("");
-    const [isRecording, setIsRecording] = useState(false);
-    const [isTyping, setIsTyping] = useState(false);
-    const [patientInfo, setPatientInfo] = useState({
-        name: "",
-        age: "",
-        gender: "",
-        email: "",
-        phone: ""
-    });
-    const [showPatientForm, setShowPatientForm] = useState(false);
-    const [triageResult, setTriageResult] = useState(null);
-    const [chatSessionId, setChatSessionId] = useState(null);
-    const [showTriageResult, setShowTriageResult] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [chatCompleted, setChatCompleted] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [patientInfo, setPatientInfo] = useState(null);
+  const [visitDetail, setVisitDetail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
+
+  // Preguntas estructuradas
+  const questions = [
+    "¡Hola! Soy tu asistente virtual de triaje. Vamos a evaluar tus síntomas. ¿Tienes dolor en alguna parte del cuerpo?",
+    "¿El dolor es intenso o severo?",
+    "¿Tienes fiebre o te sientes con temperatura elevada?",
+    "¿Tienes dificultad para respirar?",
+    "¿Sientes náuseas o has vomitado?",
+    "¿Tienes dolor de cabeza?",
+    "¿Has tenido estos síntomas por más de 24 horas?",
+    "¿Deseas agregar algo más sobre tus síntomas?"
+  ];
+
+  // Obtener información del paciente al cargar
+  useEffect(() => {
+    // Obtener datos reales del paciente desde localStorage (guardados en Banner.jsx)
+    const savedPatient = localStorage.getItem('Patient');
+    if (savedPatient) {
+      const patient = JSON.parse(savedPatient);
+      setPatientInfo(patient);
+      console.log('Paciente cargado:', patient);
+    } else {
+      // Si no hay paciente registrado, redirigir a home
+      alert('No hay información de paciente. Redirigiendo al inicio...');
+      setTimeout(() => {
+        window.location.href = '/home';
+      }, 2000);
+      return;
+    }
+
+    // Inicializar reconocimiento de voz
+    initializeSpeechRecognition();
     
-    const chatEndRef = useRef(null);
-    const [recognition, setRecognition] = useState(null);
-    const navigate = useNavigate();
+    // Iniciar con la primera pregunta
+    setTimeout(() => {
+      addBotMessage(questions[0]);
+    }, 1000);
 
-    // Inicializar ID de sesión de chat
-    useEffect(() => {
-        const newSessionId = uuidv4();
-        setChatSessionId(newSessionId);
-    }, []);
-
-    useEffect(() => {
-        // Configuración de reconocimiento de voz
-        if ('webkitSpeechRecognition' in window) {
-            const recognitionInstance = new window.webkitSpeechRecognition();
-            recognitionInstance.continuous = false;
-            recognitionInstance.interimResults = true;
-            recognitionInstance.lang = 'es-ES';
-
-            recognitionInstance.onresult = (event) => {
-                const transcript = Array.from(event.results)
-                    .map(result => result[0])
-                    .map(result => result.transcript)
-                    .join('');
-                
-                setInputText(transcript);
-            };
-
-            recognitionInstance.onend = () => {
-                setIsRecording(false);
-            };
-
-            setRecognition(recognitionInstance);
-        }
-    }, []);
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    const scrollToBottom = () => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
     };
+  }, []);
 
-    const handlePatientInfoChange = (e) => {
-        const { name, value } = e.target;
-        setPatientInfo({
-            ...patientInfo,
-            [name]: value
-        });
+  // Scroll automático al final
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Inicializar reconocimiento de voz
+  const initializeSpeechRecognition = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'es-ES';
+
+      recognitionRef.current.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setCurrentMessage(transcript);
+        setIsListening(false);
+        setIsRecording(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Error de reconocimiento:', event.error);
+        setIsListening(false);
+        setIsRecording(false);
+        alert('Error en el reconocimiento de voz. Intenta de nuevo.');
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+        setIsRecording(false);
+      };
+    } else {
+      console.error('Reconocimiento de voz no soportado');
+      alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.');
+    }
+  };
+
+  // Agregar mensaje del bot
+  const addBotMessage = (text) => {
+    const newMessage = {
+      id: Date.now(),
+      text,
+      sender: 'bot',
+      timestamp: new Date().toLocaleTimeString()
     };
+    setMessages(prev => [...prev, newMessage]);
+    
+    // Leer el mensaje en voz alta
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      utterance.rate = 0.9;
+      speechSynthesis.speak(utterance);
+    }
+  };
 
-    const savePatientInfo = () => {
-        // Validar que los campos obligatorios estén llenos
-        if (!patientInfo.name || !patientInfo.age || !patientInfo.gender || !patientInfo.email) {
-            alert("Por favor, completa los campos obligatorios");
-            return;
-        }
-
-        // Guardar información de paciente junto con el ID de sesión
-        const patientData = {
-            ...patientInfo,
-            sessionId: chatSessionId,
-            timestamp: new Date().toISOString()
-        };
-
-        // Guardar en localStorage (en producción sería en una base de datos)
-        const existingPatients = JSON.parse(localStorage.getItem('patients') || '[]');
-        localStorage.setItem('patients', JSON.stringify([...existingPatients, patientData]));
-
-        // Cerrar formulario y continuar con el chat
-        setShowPatientForm(false);
-        
-        // Mensaje de confirmación
-        const confirmationMessage = {
-            id: messages.length + 1,
-            text: `Gracias ${patientInfo.name}. Tus datos han sido registrados. Ahora cuéntame, ¿qué síntomas estás experimentando?`,
-            sender: "bot"
-        };
-        
-        setMessages(prev => [...prev, confirmationMessage]);
+  // Agregar mensaje del usuario
+  const addUserMessage = (text) => {
+    const newMessage = {
+      id: Date.now(),
+      text,
+      sender: 'user',
+      timestamp: new Date().toLocaleTimeString()
     };
+    setMessages(prev => [...prev, newMessage]);
+    
+    // Agregar respuesta a visitDetail
+    setVisitDetail(prev => prev + `P: ${questions[currentStep]} R: ${text}\n`);
+  };
 
-    const handleInputChange = (e) => {
-        setInputText(e.target.value);
-    };
-
-    const toggleRecording = () => {
-        if (isRecording) {
-            recognition?.stop();
-            setIsRecording(false);
+  // Manejar respuesta del usuario
+  const handleUserResponse = (response) => {
+    addUserMessage(response);
+    
+    // Avanzar al siguiente paso
+    if (currentStep < questions.length - 1) {
+      setTimeout(() => {
+        setCurrentStep(prev => prev + 1);
+        addBotMessage(questions[currentStep + 1]);
+      }, 1500);
+    } else {
+      // Última pregunta sobre agregar más información
+      setTimeout(() => {
+        if (response.toLowerCase().includes('sí') || response.toLowerCase().includes('si')) {
+          addBotMessage("Por favor, cuéntame qué más síntomas o información consideras importante:");
+          setCurrentStep(-1); // Modo libre
         } else {
-            try {
-                recognition?.start();
-                setIsRecording(true);
-            } catch (error) {
-                console.error("Error al iniciar grabación:", error);
-            }
+          finalizarChat();
         }
+      }, 1500);
+    }
+  };
+
+  // Finalizar chat y guardar información
+  const finalizarChat = async () => {
+    setChatCompleted(true);
+    addBotMessage("Gracias por usar nuestro sistema de triaje. Te hemos registrado en la sala de espera. Un profesional de salud te estará contactando pronto. ¡Cuídate!");
+    
+    // Guardar en formato requerido para el backend
+    const triageData = {
+      patientId: patientInfo._id,
+      document: patientInfo.document,
+      visitDetail: visitDetail
     };
 
-    // Función para analizar los síntomas y determinar el nivel de triaje
-    const analyzeSymptomsAndTriageLevel = (conversation) => {
-        // Palabras clave de emergencia alta
-        const highPriorityKeywords = [
-            "dolor intenso pecho", "no puedo respirar", "infarto", 
-            "desmayo", "inconsciente", "asfixia", "sangrado abundante",
-            "convulsiones", "parálisis", "accidente grave", "ictus", "derrame"
-        ];
-        
-        // Palabras clave de prioridad media
-        const mediumPriorityKeywords = [
-            "fiebre alta", "vómitos constantes", "deshidratación", 
-            "dolor agudo", "quemadura", "fractura", "lesión", "respirar con dificultad",
-            "dolor abdominal severo", "migraña severa"
-        ];
+    setIsLoading(true);
+    
+    // Guardar en base de datos real - integrar con tu backend
+    // await axios.post('http://localhost:3000/triage/', triageData)
+    //   .then((response) => {
+    //     if (response.data.ok) {
+    //       console.log('Triage creado:', response.data.triage);
+    //       localStorage.setItem('TriageData', JSON.stringify(triageData));
+    //       setTimeout(() => {
+    //         window.location.href = '/home';
+    //       }, 3000);
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     console.error('Error al crear triage:', error);
+    //     alert('Error al guardar el triaje. Intenta nuevamente.');
+    //   })
+    //   .finally(() => {
+    //     setIsLoading(false);
+    //   });
+    
+    // SIMULACIÓN - Remover cuando integres con backend real
+    setTimeout(() => {
+      console.log('Datos del triage guardados:', triageData);
+      localStorage.setItem('TriageData', JSON.stringify(triageData));
+      setIsLoading(false);
+      
+      // Redirigir a /home después de 3 segundos
+      setTimeout(() => {
+        alert('Redirigiéndote a la página principal...');
+        window.location.href = '/';
+      }, 3000);
+    }, 2000);
+  };
 
-        // Palabras clave de prioridad baja
-        const lowPriorityKeywords = [
-            "dolor de cabeza leve", "resfriado", "tos", "dolor de garganta",
-            "malestar general", "náuseas", "mareo leve", "erupción", "picazón"
-        ];
+  // Iniciar grabación de voz
+  const startRecording = () => {
+    if (recognitionRef.current && !isRecording) {
+      setIsRecording(true);
+      recognitionRef.current.start();
+    }
+  };
 
-        // Convertir la conversación a texto
-        const fullText = conversation
-            .filter(msg => msg.sender === "user")
-            .map(msg => msg.text.toLowerCase())
-            .join(" ");
+  // Detener grabación
+  const stopRecording = () => {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    }
+  };
 
-        // Contar ocurrencias de palabras clave
-        let highPriorityScore = 0;
-        let mediumPriorityScore = 0;
-        let lowPriorityScore = 0;
+  // Enviar mensaje
+  const sendMessage = () => {
+    if (currentMessage.trim() === '') return;
 
-        // Verificar palabras clave de alta prioridad
-        highPriorityKeywords.forEach(keyword => {
-            if (fullText.includes(keyword.toLowerCase())) {
-                highPriorityScore += 10;
-            }
-        });
+    if (currentStep === -1) {
+      // Modo libre - agregar información adicional
+      addUserMessage(currentMessage);
+      setVisitDetail(prev => prev + `Información adicional: ${currentMessage}\n`);
+      setCurrentMessage('');
+      
+      setTimeout(() => {
+        finalizarChat();
+      }, 1000);
+    } else {
+      // Preguntas estructuradas
+      handleUserResponse(currentMessage);
+      setCurrentMessage('');
+    }
+  };
 
-        // Verificar palabras clave de prioridad media
-        mediumPriorityKeywords.forEach(keyword => {
-            if (fullText.includes(keyword.toLowerCase())) {
-                mediumPriorityScore += 5;
-            }
-        });
+  // Respuesta rápida Sí/No
+  const quickResponse = (response) => {
+    if (currentStep === -1) {
+      if (response === 'No') {
+        finalizarChat();
+      }
+      return;
+    }
+    handleUserResponse(response);
+  };
 
-        // Verificar palabras clave de prioridad baja
-        lowPriorityKeywords.forEach(keyword => {
-            if (fullText.includes(keyword.toLowerCase())) {
-                lowPriorityScore += 2;
-            }
-        });
+  // Ir al inicio
+  const goHome = () => {
+    if (confirm('¿Estás seguro de que quieres salir del triaje? Se perderá el progreso actual.')) {
+      window.location.href = '/';
+    }
+  };
 
-        // Determinar nivel de triaje basado en puntuación
-        let triageLevel;
-        let recommendation;
-        let color;
-
-        if (highPriorityScore >= 10) {
-            triageLevel = "NIVEL 1 - EMERGENCIA";
-            recommendation = "Acude INMEDIATAMENTE a urgencias o llama al número de emergencias (112/911).";
-            color = "error"; // rojo
-        } else if (highPriorityScore > 0 || mediumPriorityScore >= 10) {
-            triageLevel = "NIVEL 2 - URGENTE";
-            recommendation = "Acude a urgencias en las próximas horas o programa una consulta médica urgente para hoy.";
-            color = "warning"; // naranja
-        } else if (mediumPriorityScore > 0 || lowPriorityScore >= 6) {
-            triageLevel = "NIVEL 3 - PRIORITARIO";
-            recommendation = "Programa una consulta médica en los próximos 1-2 días.";
-            color = "info"; // amarillo
-        } else if (lowPriorityScore > 0) {
-            triageLevel = "NIVEL 4 - ESTÁNDAR";
-            recommendation = "Programa una consulta médica en la próxima semana.";
-            color = "success"; // verde
-        } else {
-            triageLevel = "NIVEL 5 - NO URGENTE";
-            recommendation = "Considera medidas de autocuidado y consulta a tu médico si los síntomas persisten.";
-            color = "success"; // verde claro
-        }
-
-        return {
-            level: triageLevel,
-            recommendation,
-            color,
-            score: {
-                high: highPriorityScore,
-                medium: mediumPriorityScore,
-                low: lowPriorityScore
-            }
-        };
-    };
-
-    const saveConversationAndShowResult = () => {
-        // Analizar la conversación y obtener nivel de triaje
-        const triageResult = analyzeSymptomsAndTriageLevel(messages);
-        setTriageResult(triageResult);
-        
-        // Guardar la conversación completa
-        const conversationData = {
-            sessionId: chatSessionId,
-            patientInfo,
-            messages,
-            triageResult,
-            timestamp: new Date().toISOString(),
-            status: "pendiente" // pendiente, en_revision, completado
-        };
-        
-        // Guardar en localStorage (en producción sería en una base de datos)
-        const existingConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-        localStorage.setItem('conversations', JSON.stringify([...existingConversations, conversationData]));
-        
-        // Mostrar resultados
-        setShowTriageResult(true);
-    };
-
-    const handleSend = () => {
-        if (inputText.trim() === "") return;
-
-        // Agregar mensaje del usuario
-        const newUserMessage = {
-            id: messages.length + 1,
-            text: inputText,
-            sender: "user"
-        };
-
-        setMessages([...messages, newUserMessage]);
-        setInputText("");
-        setIsTyping(true);
-
-        // Si es el primer mensaje del usuario y no tenemos info, solicitar datos
-        if (messages.length === 1 && !showPatientForm && !patientInfo.name) {
-            setTimeout(() => {
-                const askForInfoMessage = {
-                    id: messages.length + 2,
-                    text: "Para poder brindarte una mejor atención, necesito algunos datos personales. Por favor, completa el siguiente formulario:",
-                    sender: "bot"
-                };
-                setMessages(prev => [...prev, askForInfoMessage]);
-                setIsTyping(false);
-                setShowPatientForm(true);
-            }, 1000);
-            return;
-        }
-
-        // Simular respuesta del bot después de un breve retraso
-        setTimeout(() => {
-            const botResponses = {
-                "dolor de cabeza": "El dolor de cabeza puede tener múltiples causas como estrés, deshidratación, tensión muscular o problemas de visión. ¿Hace cuánto tiempo tienes este síntoma y qué tan intenso es en una escala del 1 al 10?",
-                "fiebre": "La fiebre es una respuesta natural del cuerpo ante infecciones. ¿Qué temperatura has registrado y desde hace cuánto la tienes? ¿Tienes otros síntomas como tos, dolor de garganta o malestar general?",
-                "tos": "La tos puede ser seca o con flema. ¿Podrías especificar qué tipo de tos tienes y si va acompañada de otros síntomas como fiebre o dolor de garganta? ¿Hace cuánto comenzó?",
-                "dolor de estómago": "El dolor de estómago puede deberse a indigestión, gastritis o estrés. ¿Dónde específicamente sientes el dolor y es constante o intermitente? ¿Has notado si empeora después de comer?",
-                "mareo": "El mareo puede relacionarse con problemas de presión arterial, infecciones del oído o ansiedad. ¿Te sientes mareado al cambiar de posición o es constante? ¿Experimentas también náuseas o sudoración?"
-            };
-
-            let botResponse = "Entiendo que no te sientes bien. ¿Podrías darme más detalles sobre tus síntomas y desde cuándo los presentas?";
-            
-            // Buscar palabras clave en el mensaje del usuario
-            Object.keys(botResponses).forEach(keyword => {
-                if (inputText.toLowerCase().includes(keyword)) {
-                    botResponse = botResponses[keyword];
-                }
-            });
-
-            // Verificar si es momento de finalizar el chat y mostrar resultados
-            const messageCount = messages.length;
-            if (messageCount >= 6) { // Después de cierto número de intercambios
-                botResponse += " Basado en la información que me has proporcionado, puedo darte una evaluación preliminar. ¿Te gustaría ver el resultado?";
-                
-                const newBotMessage = {
-                    id: messages.length + 2,
-                    text: botResponse,
-                    sender: "bot",
-                    showFinishButton: true
-                };
-                
-                setMessages(prev => [...prev, newBotMessage]);
-            } else {
-                const newBotMessage = {
-                    id: messages.length + 2,
-                    text: botResponse,
-                    sender: "bot"
-                };
-                
-                setMessages(prev => [...prev, newBotMessage]);
-            }
-            
-            setIsTyping(false);
-        }, 1500);
-    };
-
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter') {
-            handleSend();
-        }
-    };
-
-    return (
-        <div className="w-full max-w-2xl mx-auto p-4">
-            <div className="card bg-base-100 shadow-xl">
-                {/* Header */}
-                <div className="card-title bg-primary text-primary-content p-6 rounded-t-xl flex justify-between items-center bg-pink-700">
-                    <div className="flex items-center">
-                        <div className="avatar placeholder">
-                            <div className="bg-primary-content text-primary rounded-full w-12">
-                                <span className="text-xl">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-11 w 11" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </span>
-                            </div>
-                        </div>
-                        <div className="ml-3">
-                            <h1 className="text-xl font-bold">TrigeWeb</h1>
-                            <p className="text-sm opacity-75">Asistente Virtual</p>
-                        </div>
-                    </div>
-                    <div className="badge badge-success animate-pulse">En línea</div>
-                </div>
-
-                {/* Chat y Triage Resultados */}
-                <div className="card-body p-4 ">
-                    {showTriageResult ? (
-                        <div className="flex flex-col items-center">
-                            <h2 className="text-2xl font-bold mb-4">Resultado de la Evaluación</h2>
-                            
-                            <div className={`alert alert-${triageResult.color} mb-4`}>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                                <div>
-                                    <h3 className="font-bold">{triageResult.level}</h3>
-                                    <div className="text-sm">{triageResult.recommendation}</div>
-                                </div>
-                            </div>
-                            
-                            <p className="text-center mb-6 ">
-                                Hemos guardado tu consulta. Un profesional médico revisará tus síntomas y podrá contactarte si es necesario.
-                            </p>
-                            
-                            <div className="flex gap-2">
-                                <button className="btn btn-primary" onClick={() => navigate('/')}>
-                                    Volver al inicio
-                                </button>
-                                <button className="btn btn-outline" onClick={() => {
-                                    setShowTriageResult(false);
-                                    // Opcionalmente resetear el chat si quieres permitir más consultas
-                                    // setMessages([{id: 1, text: "Hola, soy el asistente médico virtual. ¿Qué síntomas presentas hoy?", sender: "bot"}]);
-                                }}>
-                                    Continuar conversación
-                                </button>
-                            </div>
-                            
-                            <div className="divider">ID de consulta</div>
-                            <div className="text-sm opacity-70">
-                                {chatSessionId}
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            {showPatientForm ? (
-                                <div className="form-control">
-                                    <h2 className="text-xl font-semibold mb-4">Información Personal</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="label">
-                                                <span className="label-text">Nombre completo*</span>
-                                            </label>
-                                            <input 
-                                                type="text" 
-                                                name="name" 
-                                                value={patientInfo.name} 
-                                                onChange={handlePatientInfoChange} 
-                                                className="input input-bordered w-full" 
-                                                required 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="label">
-                                                <span className="label-text">Edad*</span>
-                                            </label>
-                                            <input 
-                                                type="number" 
-                                                name="age" 
-                                                value={patientInfo.age} 
-                                                onChange={handlePatientInfoChange} 
-                                                className="input input-bordered w-full" 
-                                                required 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="label">
-                                                <span className="label-text">Género*</span>
-                                            </label>
-                                            <select 
-                                                name="gender" 
-                                                value={patientInfo.gender} 
-                                                onChange={handlePatientInfoChange} 
-                                                className="select select-bordered w-full" 
-                                                required
-                                            >
-                                                <option value="">Seleccionar</option>
-                                                <option value="masculino">Masculino</option>
-                                                <option value="femenino">Femenino</option>
-                                                <option value="otro">Otro</option>
-                                                <option value="prefiero_no_decir">Prefiero no decir</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="label">
-                                                <span className="label-text">Email*</span>
-                                            </label>
-                                            <input 
-                                                type="email" 
-                                                name="email" 
-                                                value={patientInfo.email} 
-                                                onChange={handlePatientInfoChange} 
-                                                className="input input-bordered w-full" 
-                                                required 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="label">
-                                                <span className="label-text">Teléfono</span>
-                                            </label>
-                                            <input 
-                                                type="tel" 
-                                                name="phone" 
-                                                value={patientInfo.phone} 
-                                                onChange={handlePatientInfoChange} 
-                                                className="input input-bordered w-full" 
-                                            />
-                                        </div>
-                                    </div>
-                                    <button 
-                                        className="btn btn-primary mt-6" 
-                                        onClick={savePatientInfo}
-                                    >
-                                        Continuar
-                                    </button>
-                                    <p className="text-xs text-center mt-4">
-                                        * Campos obligatorios. Tu información está protegida según nuestra política de privacidad.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="chat-container h-[calc(100vh-300px)] min-h-[300px] overflow-y-auto flex flex-col">
-                                    {messages.map(message => (
-                                        <div 
-                                            key={message.id} 
-                                            className={`chat ${message.sender === 'user' ? 'chat-end' : 'chat-start'}`}
-                                        >
-                                            <div className={`chat-bubble ${message.sender === 'user' ? 'chat-bubble-accent' : 'chat-bubble-primary'}`}>
-                                                {message.text}
-                                                {message.showFinishButton && (
-                                                    <div className="mt-4">
-                                                        <button 
-                                                            className="btn btn-sm btn-primary" 
-                                                            onClick={saveConversationAndShowResult}
-                                                        >
-                                                            Ver mi evaluación
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {isTyping && (
-                                        <div className="chat chat-start">
-                                            <div className="chat-bubble chat-bubble-primary">
-                                                <span className="loading loading-dots loading-sm"></span>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div ref={chatEndRef} />
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
-
-                {/* Input Area*/}
-                {!showTriageResult && !showPatientForm && (
-                    <div className="card-actions justify-center p-4 bg-base-200 rounded-b-xl">
-                        <div className="join w-full">
-                            <button 
-                                onClick={toggleRecording}
-                                className={`btn join-item ${isRecording ? 'btn-error animate-pulse' : 'btn-ghost'}`}
-                                title={isRecording ? "Detener grabación" : "Iniciar grabación de voz"}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                                </svg>
-                            </button>
-                            <input
-                                type="text"
-                                className="input input-bordered w-full join-item"
-                                placeholder="Escribe tus síntomas aquí..."
-                                value={inputText}
-                                onChange={handleInputChange}
-                                onKeyPress={handleKeyPress}
-                            />
-                            <button
-                                onClick={handleSend}
-                                className="btn btn-primary join-item"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                </svg>
-                            </button>
-                        </div>
-                        
-                        {isRecording && (
-                            <div className="text-error text-sm mt-2 animate-pulse">
-                                Grabando... Habla para convertir tu voz en texto.
-                            </div>
-                        )}
-                        
-                        <div className="text-xs text-base-content opacity-70 mt-2 text-center">
-                            * Este chat es solo para consultas informativas, no reemplaza la visita a un médico profesional.
-                        </div>
-                    </div>
-                )}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <div className="bg-white shadow-lg">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Stethoscope className="w-8 h-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">Evaluación de Síntomas</h1>
+                <p className="text-sm text-gray-600">
+                  Paciente: {patientInfo?.fullname || 'Cargando...'} - Doc: {patientInfo?.document || 'Cargando...'}
+                </p>
+              </div>
             </div>
+            <button
+              onClick={goHome}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              Inicio
+            </button>
+          </div>
         </div>
-    );
+      </div>
+
+      {/* Chat Container */}
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Messages Area */}
+          <div className="h-96 overflow-y-auto p-6 bg-gray-50">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex mb-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                    message.sender === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-800 shadow-md border'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    {message.sender === 'bot' ? (
+                      <Stethoscope className="w-4 h-4 text-blue-600" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
+                    <span className="text-xs opacity-75">
+                      {message.sender === 'bot' ? 'Asistente Virtual' : 'Tú'}
+                    </span>
+                  </div>
+                  <p className="text-sm">{message.text}</p>
+                  <span className="text-xs opacity-50 mt-1 block">{message.timestamp}</span>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input Area */}
+          {!chatCompleted && (
+            <div className="p-6 bg-white border-t">
+              {/* Quick Response Buttons */}
+              {currentStep >= 0 && currentStep < questions.length - 1 && (
+                <div className="flex gap-3 mb-4 justify-center">
+                  <button
+                    onClick={() => quickResponse('Sí')}
+                    className="px-8 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 font-semibold text-lg shadow-lg transition-all"
+                  >
+                    ✅ Sí
+                  </button>
+                  <button
+                    onClick={() => quickResponse('No')}
+                    className="px-8 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 font-semibold text-lg shadow-lg transition-all"
+                  >
+                    ❌ No
+                  </button>
+                </div>
+              )}
+
+              {/* Voice Input - GRANDE Y VISIBLE */}
+              <div className="flex justify-center mb-6">
+                <button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  className={`w-32 h-32 rounded-full flex items-center justify-center text-white font-bold shadow-2xl transition-all transform ${
+                    isRecording 
+                      ? 'bg-red-500 animate-pulse scale-110' 
+                      : 'bg-blue-500 hover:bg-blue-600 hover:scale-105'
+                  }`}
+                  disabled={isLoading}
+                >
+                  {isRecording ? (
+                    <div className="text-center">
+                      <MicOff className="w-12 h-12 mx-auto mb-2" />
+                      <span className="text-sm">STOP</span>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Mic className="w-12 h-12 mx-auto mb-2" />
+                      <span className="text-sm">HABLAR</span>
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              <div className="text-center mb-6">
+                <p className="text-xl font-bold text-gray-700 mb-2">
+                  {isRecording 
+                    ? '🎤 Escuchando... Habla ahora' 
+                    : '🎤 Presiona el botón azul para hablar'
+                  }
+                </p>
+                {isListening && (
+                  <p className="text-lg text-blue-600 animate-pulse font-semibold">
+                    🔄 Procesando tu voz...
+                  </p>
+                )}
+                <p className="text-sm text-gray-500 mt-2">
+                  O puedes escribir tu respuesta abajo
+                </p>
+              </div>
+
+              {/* Text Input */}
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={currentMessage}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  placeholder="O escribe tu respuesta aquí..."
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={sendMessage}
+                  className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 flex items-center gap-2 font-semibold transition-all disabled:opacity-50"
+                  disabled={!currentMessage.trim() || isLoading}
+                >
+                  <Send className="w-5 h-5" />
+                  Enviar
+                </button>
+              </div>
+
+              {/* Status Messages */}
+              {currentStep === questions.length - 1 && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <p className="text-blue-800 text-center font-semibold">
+                    💡 Esta es la última pregunta. Después podrás agregar información adicional.
+                  </p>
+                </div>
+              )}
+
+              {currentStep === -1 && (
+                <div className="mt-4 p-4 bg-green-50 rounded-xl border border-green-200">
+                  <p className="text-green-800 text-center font-semibold">
+                    📝 Agrega cualquier información adicional que consideres importante.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Completion Status */}
+          {chatCompleted && (
+            <div className="p-8 bg-green-50 border-t">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  {isLoading ? (
+                    <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Volume2 className="w-10 h-10 text-green-600" />
+                  )}
+                </div>
+                <h3 className="text-2xl font-bold text-green-800 mb-4">
+                  ✅ Evaluación Completada
+                </h3>
+                <p className="text-lg text-green-700 mb-4">
+                  {isLoading 
+                    ? 'Guardando información en el sistema...' 
+                    : 'Información guardada exitosamente.'
+                  }
+                </p>
+                <div className="bg-white p-4 rounded-xl shadow-md max-w-md mx-auto">
+                  <p className="text-sm text-gray-600 mb-2">
+                    <strong>Datos que se guardarán:</strong>
+                  </p>
+                  <div className="text-xs text-gray-500 text-left">
+                    <p><strong>• Paciente ID:</strong> {patientInfo?._id}</p>
+                    <p><strong>• Documento:</strong> {patientInfo?.document}</p>
+                    <p><strong>• Nombre:</strong> {patientInfo?.fullname}</p>
+                    <p><strong>• Email:</strong> {patientInfo?.email}</p>
+                    <p><strong>• Detalles:</strong> {visitDetail.length} caracteres</p>
+                  </div>
+                  {visitDetail && (
+                    <div className="mt-3 p-2 bg-gray-50 rounded text-xs text-gray-600 max-h-20 overflow-y-auto">
+                      <strong>Resumen de síntomas:</strong><br/>
+                      {visitDetail.substring(0, 200)}...
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Sintomas;
