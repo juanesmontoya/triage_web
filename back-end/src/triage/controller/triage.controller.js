@@ -4,13 +4,25 @@ import Triage from "../model/triage.model.js";
 export const createTriage = async (req, res = response) => {
     const { patientId, patientDocument, visitDetail } = req.body;
     try {
-        let triage = new Triage({ 
+        const triage = new Triage({ 
             patientId, 
-            patientDocument, 
+            patientDocument,
+            doctorId: '', // Initially no doctor assigned
+            doctorDocument: '', // Initially no doctor assigned
+            symptoms: {}, // Initially no symptoms
+            diagnosis: '', // Initially no diagnosis
+            triageLevel: 6, // Default triage level
+            state: 'Open', // Default state
             visitDetail
         });
 
+        triage.patientId = patientId;
+        triage.patientDocument = patientDocument;
+        triage.visitDetail = visitDetail;
+
         await triage.save();
+
+        //activar python modules
 
         return res.status(201).json({
             ok: true,

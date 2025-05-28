@@ -26,8 +26,7 @@ const triageSchema = new mongoose.Schema({
         trim: true
     },
     triageLevel: {
-        type: String,
-        default: '6',
+        type: Number,
         trim: true
     },
     visitDetail: {

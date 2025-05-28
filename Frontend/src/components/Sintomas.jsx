@@ -19,13 +19,13 @@ const Sintomas = () => {
   // Preguntas estructuradas
   const questions = [
     "¡Hola! Soy tu asistente virtual de triaje. Vamos a evaluar tus síntomas. ¿Tienes dolor en alguna parte del cuerpo?",
-    "¿El dolor es intenso o severo?",
-    "¿Tienes fiebre o te sientes con temperatura elevada?",
-    "¿Tienes dificultad para respirar?",
-    "¿Sientes náuseas o has vomitado?",
-    "¿Tienes dolor de cabeza?",
-    "¿Has tenido estos síntomas por más de 24 horas?",
-    "¿Deseas agregar algo más sobre tus síntomas?"
+    //"¿El dolor es intenso o severo?",
+    //"¿Tienes fiebre o te sientes con temperatura elevada?",
+    //"¿Tienes dificultad para respirar?",
+    //"¿Sientes náuseas o has vomitado?",
+    //"¿Tienes dolor de cabeza?",
+    //"¿Has tenido estos síntomas por más de 24 horas?",
+    //"¿Deseas agregar algo más sobre tus síntomas?"
   ];
 
   // Obtener información del paciente al cargar
@@ -117,6 +117,7 @@ const Sintomas = () => {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'es-ES';
+      utterance.volume = 0;
       utterance.rate = 0.9;
       speechSynthesis.speak(utterance);
     }
@@ -171,7 +172,7 @@ const Sintomas = () => {
     // Datos para el backend (formato original)
     const triageData = {
       patientId: patientInfo._id,
-      document: patientInfo.document,
+      patientDocument: patientInfo.document,
       visitDetail: visitDetail
     };
 
