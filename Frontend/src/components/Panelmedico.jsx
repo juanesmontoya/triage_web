@@ -692,6 +692,7 @@ const Panelmedico = () => {
                                                         onChange={(e) => setEditedPatient({...editedPatient, document: e.target.value})}
                                                         className="input input-bordered w-full"
                                                         placeholder="Número de documento"
+                                                        readOnly
                                                     />
                                                 </div>
                                             </div>
