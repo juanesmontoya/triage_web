@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Send, Home, Volume2, MessageSquare, User, Stethoscope } from 'lucide-react';
 
-// 
-// sintomas
 const Sintomas = () => {
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState('');
@@ -31,14 +29,20 @@ const Sintomas = () => {
 
   // Obtener información del paciente al cargar
   useEffect(() => {
-    // Simular carga del paciente desde localStorage
-    const mockPatient = {
-      _id: "6835df27e27e2a039148c1fd",
-      fullname: "Juan Pérez",
-      document: "12345678",
-      email: "juan@email.com"
-    };
-    setPatientInfo(mockPatient);
+    // Obtener datos reales del paciente desde localStorage (guardados en Banner.jsx)
+    const savedPatient = localStorage.getItem('Patient');
+    if (savedPatient) {
+      const patient = JSON.parse(savedPatient);
+      setPatientInfo(patient);
+      console.log('Paciente cargado:', patient);
+    } else {
+      // Si no hay paciente registrado, redirigir a home
+      alert('No hay información de paciente. Redirigiendo al inicio...');
+      setTimeout(() => {
+        window.location.href = '/home';
+      }, 2000);
+      return;
+    }
 
     // Inicializar reconocimiento de voz
     initializeSpeechRecognition();
@@ -159,7 +163,7 @@ const Sintomas = () => {
     setChatCompleted(true);
     addBotMessage("Gracias por usar nuestro sistema de triaje. Te hemos registrado en la sala de espera. Un profesional de salud te estará contactando pronto. ¡Cuídate!");
     
-    // Guardar en formato requerido
+    // Guardar en formato requerido para el backend
     const triageData = {
       patientId: patientInfo._id,
       document: patientInfo.document,
@@ -168,16 +172,35 @@ const Sintomas = () => {
 
     setIsLoading(true);
     
-    // Simular guardado en base de datos
+    // Guardar en base de datos real - integrar con tu backend
+    // await axios.post('http://localhost:3000/triage/', triageData)
+    //   .then((response) => {
+    //     if (response.data.ok) {
+    //       console.log('Triage creado:', response.data.triage);
+    //       localStorage.setItem('TriageData', JSON.stringify(triageData));
+    //       setTimeout(() => {
+    //         window.location.href = '/home';
+    //       }, 3000);
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     console.error('Error al crear triage:', error);
+    //     alert('Error al guardar el triaje. Intenta nuevamente.');
+    //   })
+    //   .finally(() => {
+    //     setIsLoading(false);
+    //   });
+    
+    // SIMULACIÓN - Remover cuando integres con backend real
     setTimeout(() => {
-      console.log('Datos guardados:', triageData);
+      console.log('Datos del triage guardados:', triageData);
       localStorage.setItem('TriageData', JSON.stringify(triageData));
       setIsLoading(false);
       
-      // Simular redirección a home después de 3 segundos
+      // Redirigir a /home después de 3 segundos
       setTimeout(() => {
-        alert('Redirigiéndote al inicio...');
-        // En tu código real: navigate('/');
+        alert('Redirigiéndote a la página principal...');
+        window.location.href = '/';
       }, 3000);
     }, 2000);
   };
@@ -231,8 +254,9 @@ const Sintomas = () => {
 
   // Ir al inicio
   const goHome = () => {
-    alert('Redirigiéndote al inicio...');
-    // En tu código real: navigate('/');
+    if (confirm('¿Estás seguro de que quieres salir del triaje? Se perderá el progreso actual.')) {
+      window.location.href = '/';
+    }
   };
 
   return (
@@ -246,7 +270,7 @@ const Sintomas = () => {
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">Evaluación de Síntomas</h1>
                 <p className="text-sm text-gray-600">
-                  Paciente: {patientInfo?.fullname} - Doc: {patientInfo?.document}
+                  Paciente: {patientInfo?.fullname || 'Cargando...'} - Doc: {patientInfo?.document || 'Cargando...'}
                 </p>
               </div>
             </div>
@@ -420,14 +444,22 @@ const Sintomas = () => {
                   }
                 </p>
                 <div className="bg-white p-4 rounded-xl shadow-md max-w-md mx-auto">
-                  <p className="text-sm text-gray-600">
-                    <strong>Datos guardados:</strong>
+                  <p className="text-sm text-gray-600 mb-2">
+                    <strong>Datos que se guardarán:</strong>
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    • Paciente ID: {patientInfo?._id}<br/>
-                    • Documento: {patientInfo?.document}<br/>
-                    • Detalles: {visitDetail.length} caracteres
-                  </p>
+                  <div className="text-xs text-gray-500 text-left">
+                    <p><strong>• Paciente ID:</strong> {patientInfo?._id}</p>
+                    <p><strong>• Documento:</strong> {patientInfo?.document}</p>
+                    <p><strong>• Nombre:</strong> {patientInfo?.fullname}</p>
+                    <p><strong>• Email:</strong> {patientInfo?.email}</p>
+                    <p><strong>• Detalles:</strong> {visitDetail.length} caracteres</p>
+                  </div>
+                  {visitDetail && (
+                    <div className="mt-3 p-2 bg-gray-50 rounded text-xs text-gray-600 max-h-20 overflow-y-auto">
+                      <strong>Resumen de síntomas:</strong><br/>
+                      {visitDetail.substring(0, 200)}...
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
