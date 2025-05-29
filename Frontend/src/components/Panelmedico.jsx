@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-
-import { Save, X, Download, Moon, Sun } from 'lucide-react';
+import { Save, X, Download, Moon, Sun, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import Logout from './Logout';
-
 
 const labelMap = {
     patientDocument: 'Documento del paciente',
@@ -19,6 +17,7 @@ const labelMap = {
 const API_BASE = 'http://localhost:3000';
 
 const PanelMedico = () => {
+    const navigate = useNavigate();
     const [triages, setTriages] = useState([]);
     const [selectedTriage, setSelectedTriage] = useState(null);
     const [statusFilter, setStatusFilter] = useState('Open');
@@ -38,6 +37,11 @@ const PanelMedico = () => {
     useEffect(() => {
         loadTriages();
     }, []);
+
+    // Función para ir hacia atrás
+    const handleGoBack = () => {
+        navigate('/');
+    };
 
     const loadTriages = async () => {
         try {
@@ -93,7 +97,6 @@ const PanelMedico = () => {
             toast.error('Error al guardar cambios');
             return [err];
         }
-
     };
 
     const handleCloseTriage = async () => {
@@ -116,333 +119,306 @@ const PanelMedico = () => {
         }
     };
 
+    // Función generatePDF simplificada pero intuitiva
     const generatePDF = () => {
-        if (!selectedTriage) return;
-    
+        if (!selectedTriage) {
+            toast.error('Selecciona un triage para generar el PDF');
+            return;
+        }
+
         const pdfContent = `
             <!DOCTYPE html>
             <html>
             <head>
                 <meta charset="UTF-8">
-                <title>Reporte de Triage - ${selectedTriage.patientDocument}</title>
+                <title>Reporte Médico - ${selectedTriage.patientDocument}</title>
                 <style>
-                    @media print {
-                        body { margin: 0; }
-                        .no-print { display: none; }
-                        .page-break { page-break-after: always; }
-                    }
+                    * { box-sizing: border-box; }
+                    
                     body { 
-                        font-family: Arial, sans-serif; 
-                        margin: 20px; 
-                        line-height: 1.6; 
-                        color: #333;
-                        font-size: 12px;
-                    }
-                    .header { 
-                        text-align: center; 
-                        border-bottom: 3px solid #1e40af; 
-                        padding: 20px;
-                        margin-bottom: 30px; 
-                        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-                        border-radius: 12px;
-                        box-shadow: 0 4px 6px rgba(30, 64, 175, 0.1);
-                    }
-                    .header h1 { 
-                        color: #1e40af; 
-                        margin: 0; 
-                        font-size: 28px;
-                        font-weight: bold;
-                        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-                    }
-                    .header p { 
-                        margin: 5px 0; 
-                        color: #475569;
-                        font-weight: 500;
-                    }
-                    .section { 
-                        margin-bottom: 25px; 
-                        border: 2px solid #64748b;
-                        border-radius: 12px;
-                        overflow: hidden;
-                        box-shadow: 0 2px 4px rgba(100, 116, 139, 0.1);
-                    }
-                    .section-title { 
-                        background: linear-gradient(135deg, #334155, #475569);
-                        color: white;
-                        padding: 15px 20px; 
-                        font-weight: bold; 
-                        font-size: 16px;
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                         margin: 0;
-                        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-                    }
-                    .section-content {
                         padding: 20px;
-                        background: rgba(248, 250, 252, 0.8);
+                        line-height: 1.6;
+                        color: #2c3e50;
+                        background: #f8f9fa;
                     }
-                    .info-grid { 
-                        display: grid; 
-                        grid-template-columns: 1fr 1fr; 
-                        gap: 15px; 
-                        margin-bottom: 15px;
-                    }
-                    .info-item {
-                        padding: 12px;
-                        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-                        border-radius: 8px;
-                        border-left: 4px solid #1e40af;
-                        box-shadow: 0 1px 3px rgba(30, 64, 175, 0.1);
-                    }
-                    .info-item strong {
-                        color: #1e40af;
-                        display: block;
-                        margin-bottom: 5px;
-                        font-size: 13px;
-                    }
-                    .info-value {
-                        color: #374151;
-                        font-size: 14px;
-                        font-weight: 500;
-                    }
-                    .full-width {
-                        grid-column: 1 / -1;
-                    }
-                    .triage-level {
-                        text-align: center;
-                        padding: 20px;
+                    
+                    .container {
+                        max-width: 800px;
+                        margin: 0 auto;
+                        background: white;
                         border-radius: 12px;
-                        margin: 15px 0;
-                        border: 3px solid #059669;
-                        background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-                        box-shadow: 0 4px 8px rgba(5, 150, 105, 0.2);
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                        overflow: hidden;
                     }
-                    .triage-level h3 {
-                        color: #059669;
-                        font-size: 20px;
-                        margin: 0 0 10px 0;
-                        font-weight: bold;
+                    
+                    .header {
+                        background: linear-gradient(135deg, #3b82f6, #1e40af);
+                        color: white;
+                        padding: 30px;
+                        text-align: center;
                     }
-                    .symptoms-list {
-                        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-                        padding: 15px;
+                    
+                    .header h1 {
+                        margin: 0;
+                        font-size: 24px;
+                        font-weight: 600;
+                    }
+                    
+                    .header p {
+                        margin: 10px 0 0 0;
+                        opacity: 0.9;
+                        font-size: 14px;
+                    }
+                    
+                    .content {
+                        padding: 30px;
+                    }
+                    
+                    .info-row {
+                        display: flex;
+                        margin-bottom: 20px;
+                        border-bottom: 1px solid #e9ecef;
+                        padding-bottom: 15px;
+                    }
+                    
+                    .info-label {
+                        font-weight: 600;
+                        color: #495057;
+                        width: 200px;
+                        flex-shrink: 0;
+                    }
+                    
+                    .info-value {
+                        color: #212529;
+                        flex: 1;
+                    }
+                    
+                    .section {
+                        margin: 30px 0;
+                    }
+                    
+                    .section-title {
+                        font-size: 18px;
+                        font-weight: 600;
+                        color: #1e40af;
+                        margin-bottom: 15px;
+                        padding-bottom: 8px;
+                        border-bottom: 2px solid #e9ecef;
+                    }
+                    
+                    .highlight-box {
+                        background: linear-gradient(135deg, #f8f9ff, #e6f2ff);
+                        border: 1px solid #3b82f6;
                         border-radius: 8px;
-                        border: 1px solid #cbd5e1;
+                        padding: 20px;
+                        margin: 20px 0;
+                        text-align: center;
                     }
+                    
+                    .symptoms-list {
+                        background: #f8f9fa;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin: 10px 0;
+                    }
+                    
                     .symptoms-list ul {
                         margin: 0;
                         padding-left: 20px;
                     }
+                    
                     .symptoms-list li {
-                        margin: 8px 0;
-                        color: #374151;
-                        font-weight: 500;
+                        margin: 5px 0;
+                        color: #495057;
                     }
-                    .diagnosis-box {
-                        background: linear-gradient(135deg, #1e40af, #1d4ed8);
-                        color: white;
-                        padding: 20px;
-                        border-radius: 12px;
-                        margin: 15px 0;
+                    
+                    .status-badge {
+                        display: inline-block;
+                        padding: 4px 12px;
+                        border-radius: 20px;
+                        font-size: 12px;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                    }
+                    
+                    .status-open {
+                        background: #d4edda;
+                        color: #155724;
+                    }
+                    
+                    .status-closed {
+                        background: #f8d7da;
+                        color: #721c24;
+                    }
+                    
+                    .footer {
+                        background: #f8f9fa;
+                        padding: 20px 30px;
                         text-align: center;
-                        box-shadow: 0 4px 8px rgba(30, 64, 175, 0.3);
+                        font-size: 12px;
+                        color: #6c757d;
+                        border-top: 1px solid #dee2e6;
                     }
-                    .diagnosis-box h3 {
-                        margin: 0 0 10px 0;
-                        font-size: 18px;
-                    }
-                    .diagnosis-text {
-                        font-size: 16px;
-                        font-weight: 500;
-                        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-                    }
-                    .footer { 
-                        margin-top: 40px; 
-                        text-align: center; 
-                        font-size: 11px; 
-                        color: #475569;
-                        border-top: 2px solid #64748b;
-                        padding-top: 20px;
-                        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-                        border-radius: 8px;
-                        padding: 20px;
-                    }
-                    .print-button {
+                    
+                    .print-btn {
                         position: fixed;
                         top: 20px;
                         right: 20px;
-                        background: linear-gradient(135deg, #1e40af, #1d4ed8);
+                        background: #3b82f6;
                         color: white;
                         border: none;
-                        padding: 12px 24px;
+                        padding: 12px 20px;
                         border-radius: 8px;
                         cursor: pointer;
-                        font-size: 14px;
-                        font-weight: bold;
-                        box-shadow: 0 4px 8px rgba(30, 64, 175, 0.3);
+                        font-weight: 600;
+                        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
                         transition: all 0.3s ease;
                     }
-                    .print-button:hover {
-                        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+                    
+                    .print-btn:hover {
+                        background: #2563eb;
                         transform: translateY(-2px);
-                        box-shadow: 0 6px 12px rgba(30, 64, 175, 0.4);
                     }
-                    .status-badge {
-                        display: inline-block;
-                        padding: 6px 12px;
-                        border-radius: 20px;
-                        font-size: 12px;
-                        font-weight: bold;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                    }
-                    .status-open {
-                        background-color: #dcfce7;
-                        color: #166534;
-                        border: 1px solid #bbf7d0;
-                    }
-                    .status-closed {
-                        background-color: #fee2e2;
-                        color: #991b1b;
-                        border: 1px solid #fecaca;
+                    
+                    @media print {
+                        .print-btn { display: none; }
+                        body { background: white; }
+                        .container { box-shadow: none; }
                     }
                 </style>
             </head>
             <body>
-                <button class="print-button no-print" onclick="window.print()">📄 Guardar como PDF</button>
+                <button class="print-btn" onclick="window.print()">📄 Imprimir / Guardar PDF</button>
                 
-                <div class="header">
-                    <h1>🏥 REPORTE DE TRIAGE MÉDICO</h1>
-                    <p><strong>Sistema de Gestión Médica</strong></p>
-                    <p>Fecha de generación: ${new Date().toLocaleString('es-ES')}</p>
-                    <p>ID del Triage: ${selectedTriage._id}</p>
-                </div>
-    
-                <div class="section">
-                    <div class="section-title">📋 INFORMACIÓN DEL PACIENTE</div>
-                    <div class="section-content">
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <strong>🆔 Documento del Paciente:</strong>
+                <div class="container">
+                    <div class="header">
+                        <h1>🏥 Reporte Médico de Triage</h1>
+                        <p>Sistema de Gestión Médica - ${new Date().toLocaleDateString('es-ES')}</p>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="section">
+                            <div class="section-title">📋 Información del Paciente</div>
+                            <div class="info-row">
+                                <div class="info-label">Documento:</div>
                                 <div class="info-value">${selectedTriage.patientDocument || 'No especificado'}</div>
                             </div>
-                            <div class="info-item">
-                                <strong>👨‍⚕️ Documento del Doctor:</strong>
-                                <div class="info-value">${selectedTriage.doctorDocument || authUser?.document || 'No especificado'}</div>
+                            <div class="info-row">
+                                <div class="info-label">Doctor:</div>
+                                <div class="info-value">${authUser?.fullname || 'No especificado'} (${authUser?.document || 'N/A'})</div>
                             </div>
-                            <div class="info-item">
-                                <strong>📅 Estado del Triage:</strong>
+                            <div class="info-row">
+                                <div class="info-label">Estado:</div>
                                 <div class="info-value">
                                     <span class="status-badge ${selectedTriage.state === 'Open' ? 'status-open' : 'status-closed'}">
                                         ${selectedTriage.state || 'No especificado'}
                                     </span>
                                 </div>
                             </div>
-                            <div class="info-item">
-                                <strong>🕐 Fecha de Creación:</strong>
-                                <div class="info-value">${selectedTriage.createdAt ? new Date(selectedTriage.createdAt).toLocaleString('es-ES') : 'No especificada'}</div>
+                            <div class="info-row">
+                                <div class="info-label">Fecha:</div>
+                                <div class="info-value">${new Date().toLocaleString('es-ES')}</div>
                             </div>
                         </div>
-                    </div>
-                </div>
-    
-                <div class="section">
-                    <div class="section-title">🩺 MOTIVO DE CONSULTA</div>
-                    <div class="section-content">
-                        <div class="info-item full-width">
-                            <strong>📝 Detalle de la visita:</strong>
-                            <div class="info-value" style="margin-top: 8px; line-height: 1.6;">
+                        
+                        <div class="section">
+                            <div class="section-title">🩺 Motivo de Consulta</div>
+                            <div class="info-value" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
                                 ${selectedTriage.visitDetail || 'No se especificó motivo de consulta'}
                             </div>
                         </div>
-                    </div>
-                </div>
-    
-                <div class="section">
-                    <div class="section-title">🚨 NIVEL DE TRIAGE</div>
-                    <div class="section-content">
-                        <div class="triage-level">
-                            <h3>🎯 Nivel de Prioridad</h3>
-                            <div style="font-size: 18px; font-weight: bold;">
-                                ${selectedTriage.triageLevel || 'No evaluado'}
+                        
+                        <div class="section">
+                            <div class="section-title">🎯 Nivel de Triage</div>
+                            <div class="highlight-box">
+                                <strong style="font-size: 18px; color: #1e40af;">
+                                    ${selectedTriage.triageLevel || editData.triageLevel || 'No evaluado'}
+                                </strong>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">🩹 Síntomas Reportados</div>
+                            <div class="symptoms-list">
+                                ${selectedTriage.symptoms && selectedTriage.symptoms.length > 0 ? `
+                                    <ul>
+                                        ${selectedTriage.symptoms.map(symptom => `<li>${symptom}</li>`).join('')}
+                                    </ul>
+                                ` : '<p style="text-align: center; color: #6c757d; font-style: italic;">No se reportaron síntomas específicos</p>'}
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">📋 Diagnóstico Médico</div>
+                            <div class="highlight-box" style="background: linear-gradient(135deg, #e6f7ff, #f0f8ff); border-color: #1e40af;">
+                                <strong style="color: #1e40af; font-size: 16px;">
+                                    ${selectedTriage.diagnosis || editData.diagnosis || 'Pendiente de evaluación médica'}
+                                </strong>
                             </div>
                         </div>
                     </div>
-                </div>
-    
-                <div class="section">
-                    <div class="section-title">🩹 SÍNTOMAS REPORTADOS</div>
-                    <div class="section-content">
-                        <div class="symptoms-list">
-                            ${selectedTriage.symptoms && selectedTriage.symptoms.length > 0 ? `
-                                <ul>
-                                    ${selectedTriage.symptoms.map(symptom => `<li>• ${symptom}</li>`).join('')}
-                                </ul>
-                            ` : '<p style="text-align: center; color: #6b7280; font-style: italic;">No se reportaron síntomas específicos</p>'}
-                        </div>
-                    </div>
-                </div>
-    
-                <div class="section">
-                    <div class="section-title">🩺 DIAGNÓSTICO MÉDICO</div>
-                    <div class="section-content">
-                        <div class="diagnosis-box">
-                            <h3>📋 Diagnóstico</h3>
-                            <div class="diagnosis-text">
-                                ${selectedTriage.diagnosis || 'Pendiente de evaluación médica'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-    
-                <div class="footer">
-                    <p><strong>🏥 Sistema de Gestión Médica</strong></p>
-                    <p>Este reporte fue generado automáticamente por el sistema</p>
-                    <p>Doctor responsable: ${authUser?.fullname || 'No especificado'}</p>
-                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #64748b;">
-                        <p>⚠️ <em>Este documento es confidencial y está protegido por la ley de protección de datos médicos</em></p>
-                    </div>
-                </div>
-    
-                <script>
-                    // Función para imprimir automáticamente al cargar (opcional)
-                    function autoPrint() {
-                        setTimeout(function() {
-                            window.print();
-                        }, 500);
-                    }
                     
-                    // Descomenta la siguiente línea si quieres que se imprima automáticamente
-                    // window.onload = autoPrint;
-                </script>
+                    <div class="footer">
+                        <p><strong>Sistema de Gestión Médica</strong></p>
+                        <p>Este documento es confidencial y está protegido por las leyes de protección de datos médicos</p>
+                        <p style="margin-top: 10px;">ID del Triage: ${selectedTriage._id}</p>
+                    </div>
+                </div>
             </body>
             </html>
         `;
-    
-        // Crear un nuevo documento HTML
+
+        // Abrir en nueva ventana
         const newWindow = window.open('', '_blank');
-        newWindow.document.write(pdfContent);
-        newWindow.document.close();
-        
-        // Opcional: cerrar la ventana después de imprimir
-        newWindow.onafterprint = function() {
-            newWindow.close();
-        };
-        
-        toast.success('PDF generado correctamente');
+        if (newWindow) {
+            newWindow.document.write(pdfContent);
+            newWindow.document.close();
+            
+            // Cerrar ventana después de imprimir (opcional)
+            newWindow.onafterprint = function() {
+                newWindow.close();
+            };
+            
+            toast.success('PDF abierto en nueva ventana');
+        } else {
+            toast.error('Permite ventanas emergentes para generar el PDF');
+        }
     };
 
     return (
         <div className="flex flex-col h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-            <div className="p-2 flex justify-between items-center shadow bg-gray-100 dark:bg-gray-800">
-                <div className="text-sm font-medium">
-                    {authUser ? (
-                        <span>👤 {authUser.fullname} ({authUser.document})</span>
-                    ) : (
-                        <span>No autenticado</span>
-                    )}
+            {/* Header mejorado con flecha de navegación */}
+            <div className="p-3 flex justify-between items-center shadow-md bg-gray-100 dark:bg-gray-800 border-b">
+                <div className="flex items-center gap-4">
+                    {/* Botón de regresar */}
+                    <button 
+                        onClick={handleGoBack}
+                        className="btn btn-ghost btn-sm flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        title="Regresar al inicio"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span className="hidden sm:inline">Inicio</span>
+                    </button>
+                    
+                    <div className="text-sm font-medium">
+                        {authUser ? (
+                            <span>👤 {authUser.fullname} ({authUser.document})</span>
+                        ) : (
+                            <span>No autenticado</span>
+                        )}
+                    </div>
                 </div>
+                
                 <div className="flex items-center gap-2">
-                    <button onClick={() => setDarkMode(!darkMode)} className="btn btn-sm">
-                        {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />} {darkMode ? 'Claro' : 'Oscuro'}
+                    <button 
+                        onClick={() => setDarkMode(!darkMode)} 
+                        className="btn btn-ghost btn-sm flex items-center gap-2"
+                        title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                    >
+                        {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        <span className="hidden sm:inline">{darkMode ? 'Claro' : 'Oscuro'}</span>
                     </button>
                     <Logout />
                 </div>
@@ -463,17 +439,24 @@ const PanelMedico = () => {
                         <button className={`btn ${statusFilter === 'Closed' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setStatusFilter('Closed')}>Closed</button>
                     </div>
                     <div className="overflow-y-auto h-[80vh]">
-                        {filteredTriages.map(t => (
-                            <div
-                                key={t._id}
-                                className={`card mb-2 p-3 cursor-pointer ${selectedTriage?._id === t._id ? 'bg-pink-100 dark:bg-pink-900' : 'bg-gray-200 dark:bg-gray-700 hover:bg-pink-50 dark:hover:bg-pink-800'}`}
-                                onClick={() => handleSelectTriage(t)}
-                            >
-                                <h3 className="font-semibold">Documento: {t.patientDocument}</h3>
-                                <p className="text-sm">Nivel: {t.triageLevel || 'N/A'}</p>
-                                <p className="text-xs">Estado: {t.state}</p>
+                        {filteredTriages.length > 0 ? (
+                            filteredTriages.map(t => (
+                                <div
+                                    key={t._id}
+                                    className={`card mb-2 p-3 cursor-pointer transition-colors ${selectedTriage?._id === t._id ? 'bg-blue-100 dark:bg-blue-900 border-blue-300' : 'bg-gray-200 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-800'}`}
+                                    onClick={() => handleSelectTriage(t)}
+                                >
+                                    <h3 className="font-semibold">Documento: {t.patientDocument}</h3>
+                                    <p className="text-sm">Nivel: {t.triageLevel || 'N/A'}</p>
+                                    <p className="text-xs">Estado: {t.state}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center text-gray-500 mt-8">
+                                <p>No hay triages {statusFilter.toLowerCase()}</p>
+                                <p className="text-xs mt-1">Intenta cambiar el filtro o buscar algo diferente</p>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
 
@@ -485,7 +468,7 @@ const PanelMedico = () => {
                                 {Object.entries(selectedTriage).filter(([key]) => !['_id', '__v'].includes(key)).map(([key, value]) => (
                                     <div key={key}>
                                         <label className="font-semibold capitalize">{labelMap[key] || key}</label>
-                                        <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                        <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
                                             {Array.isArray(value) ? value.join(', ') : String(value)}
                                         </div>
                                     </div>
@@ -499,6 +482,7 @@ const PanelMedico = () => {
                                         className="input input-bordered w-full"
                                         value={editData.diagnosis}
                                         onChange={(e) => setEditData({ ...editData, diagnosis: e.target.value })}
+                                        placeholder="Ingrese el diagnóstico..."
                                     />
                                 </div>
                                 <div>
@@ -507,29 +491,32 @@ const PanelMedico = () => {
                                         className="input input-bordered w-full"
                                         value={editData.triageLevel}
                                         onChange={(e) => setEditData({ ...editData, triageLevel: e.target.value })}
+                                        placeholder="Ej: Alto, Medio, Bajo"
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex gap-2 mt-4">
-                                <button className="btn btn-success gap-1" onClick={handleSave}>
+                            <div className="flex gap-2 mt-6 flex-wrap">
+                                <button className="btn btn-success gap-2" onClick={handleSave}>
                                     <Save className="w-4 h-4" /> Guardar Cambios
                                 </button>
                                 {selectedTriage.state === 'Open' && (
-                                    <button className="btn btn-warning gap-1" onClick={handleCloseTriage}>
+                                    <button className="btn btn-warning gap-2" onClick={handleCloseTriage}>
                                         <X className="w-4 h-4" /> Cerrar Triage
                                     </button>
                                 )}
                                 {selectedTriage.state === 'Closed' && (
-                                    <button className="btn btn-error gap-1" onClick={generatePDF}>
-                                        <Download className="w-4 h-4" /> Exportar PDF
+                                    <button className="btn btn-info gap-2" onClick={generatePDF}>
+                                        <Download className="w-4 h-4" /> Generar PDF
                                     </button>
                                 )}
                             </div>
                         </div>
                     ) : (
-                        <div className="flex justify-center items-center h-full text-gray-400">
-                            <p>Seleccione un triage de la lista</p>
+                        <div className="flex flex-col justify-center items-center h-full text-gray-400">
+                            <div className="text-6xl mb-4">📋</div>
+                            <p className="text-lg">Selecciona un triage de la lista</p>
+                            <p className="text-sm mt-2">Haz clic en cualquier triage para ver sus detalles</p>
                         </div>
                     )}
                 </div>
