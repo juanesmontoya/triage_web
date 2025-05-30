@@ -1,11 +1,9 @@
 import Router from 'express';
-import { createTriage, getTriage, getAllTriage, updateTriage, updateTriageLevel } from '../triage/controller/triage.controller.js';
+import { createTriage, getAllTriage, updateTriage } from '../triage/controller/triage.controller.js';
 const router = Router();
 
 router.post('/create', createTriage);
-router.get('/', getTriage);
 router.get('/triages', getAllTriage);
-router.post('/updateTriage', updateTriage);
-router.post('/updateTriageLevel', updateTriageLevel);
+router.put('/updateTriage', updateTriage);
 
 export default router;

@@ -19,7 +19,7 @@ def extract_keywords(tokens, keywords_from_db):
                 print(f"Advertencia: triageLevel no numérico en symptom {kw['symptom']}")
 
     found_keywords = []
-    current_min_level = float('inf')  # Mantengo infinito aquí para comparar correctamente
+    current_min_level = int(6)  
 
     normalized_text = normalize_text(" ".join(tokens).lower())
     normalized_tokens = [normalize_text(token.lower()) for token in tokens]
@@ -40,5 +40,5 @@ def extract_keywords(tokens, keywords_from_db):
 
     return {
         "found_keywords": found_keywords,
-        "triage_level": current_min_level if current_min_level != float('inf') else None
+        "triage_level": current_min_level
     }
