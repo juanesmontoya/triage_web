@@ -20,6 +20,7 @@ def extract_keywords(tokens, keywords_from_db):
                 print(f"Advertencia: triageLevel no numérico en symptom {kw['symptom']}")
 
     found_keywords = []
+    matched_levels = []
 
     normalized_text = normalize_text(" ".join(tokens).lower())
     normalized_tokens = [normalize_text(token.lower()) for token in tokens]
@@ -29,13 +30,15 @@ def extract_keywords(tokens, keywords_from_db):
             # Coincidencia exacta de frase completa
             pattern = r'\b' + re.escape(keyword) + r'\b'
             if re.search(pattern, normalized_text):
-                found_keywords.append({"symptom": keyword, "triageLevel": level})
+                found_keywords.append(keyword)
+                matched_levels.append(level)
         else:
             # Coincidencia exacta por token
             if keyword in normalized_tokens:
-                found_keywords.append({"symptom": keyword, "triageLevel": level})
+                found_keywords.append(keyword)
+                matched_levels.append(level)
 
-    triage_level = min((kw["triageLevel"] for kw in found_keywords), default=6)
+    triage_level = min(matched_levels, default=6)
 
     return {
         "found_keywords": found_keywords,
