@@ -1,5 +1,6 @@
 
 import unicodedata
+import re
 
 def normalize_text(text):
     # Elimina acentos y normaliza
@@ -19,26 +20,24 @@ def extract_keywords(tokens, keywords_from_db):
                 print(f"Advertencia: triageLevel no numérico en symptom {kw['symptom']}")
 
     found_keywords = []
-    current_min_level = int(6)  
 
     normalized_text = normalize_text(" ".join(tokens).lower())
     normalized_tokens = [normalize_text(token.lower()) for token in tokens]
 
-    for keyword, kw_level in keyword_dict.items():
+    for keyword, level in keyword_dict.items():
         if ' ' in keyword:
-            # Si es multi-palabra, buscar en el texto completo
-            if keyword in normalized_text:
-                found_keywords.append(keyword)
-                if kw_level < current_min_level:
-                    current_min_level = kw_level
+            # Coincidencia exacta de frase completa
+            pattern = r'\b' + re.escape(keyword) + r'\b'
+            if re.search(pattern, normalized_text):
+                found_keywords.append({"symptom": keyword, "triageLevel": level})
         else:
-            # Si es palabra simple, buscar token por token
+            # Coincidencia exacta por token
             if keyword in normalized_tokens:
-                found_keywords.append(keyword)
-            if kw_level < current_min_level:
-                current_min_level = kw_level
+                found_keywords.append({"symptom": keyword, "triageLevel": level})
+
+    triage_level = min((kw["triageLevel"] for kw in found_keywords), default=6)
 
     return {
         "found_keywords": found_keywords,
-        "triage_level": current_min_level
+        "triage_level": triage_level
     }
