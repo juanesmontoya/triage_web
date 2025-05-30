@@ -1,11 +1,10 @@
-version: '3.8'
-
 services:
   api:
     container_name: backend
-    build:
+    build: 
       context: ./back-end
-      dockerfile: Dockerfile
+      dockerfile: dockerfile.dev
+    command: npm start
     ports:
       - "3000:3000"
     environment:
@@ -13,9 +12,11 @@ services:
       MONGODB_URI: mongodb+srv://juanesmontoya92:tdea@electiva2.zd1g5.mongodb.net/triageDb
       JWT_SECRET: anysecret
       PYTHON_URL: http://python:3002/processData
+    volumes:
+      - ./back-end:/app
     depends_on:
-      - python
       - mongo_db
+      - python
     networks:
       - triage-network
 
@@ -24,33 +25,35 @@ services:
     image: mongo:latest
     restart: always
     ports:
-      - "27017:27017"
+      - 27017:27017
     volumes:
       - mongo_data:/data/db
-    networks:
-      - triage-network
-
+  
   frontend:
     container_name: frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    build: 
+      context: ./Frontend
+    working_dir: /app
     ports:
-      - "8080:80" # Producción servida por Nginx
-    environment:
-      - VITE_BACKEND_URL=http://api:3000
+      - "3001:3001"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - api
-    networks:
-      - triage-network
 
   python:
     container_name: python
-    build:
+    build: 
       context: ./python
-      dockerfile: Dockerfile
+    working_dir: /app
     ports:
       - "3002:3002"
+    environment:
+      MONGODB_URI: mongodb+srv://juanesmontoya92:tdea@electiva2.zd1g5.mongodb.net/triageDb
+    volumes:
+      - ./python:/app
+      - /app/venv
     networks:
       - triage-network
 
