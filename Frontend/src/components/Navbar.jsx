@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Login from "./Login";
 import Logout from "./Logout";
 import { useAuth } from "../context/AuthProvider";
 
 export default function Navbar({ darkMode, setDarkMode }) {
   const [authUser] = useAuth();
-
+  const location = useLocation();
   const [sticky, setSticky] = useState(false);
 
   const userData = JSON.parse(localStorage.getItem("Users"));
@@ -34,10 +35,13 @@ export default function Navbar({ darkMode, setDarkMode }) {
 
   const navItems = (
     <>
-      <li>
-        <a href="/">Home</a>
-      </li>
-      {isUserLoggedIn() && (
+      {/* commentando el boton de Home para que no aparezca en el navbar ya que no es necesario
+      {location.pathname !== "/panelmedico" && (
+        <li>
+          <a href="/">Home</a>
+        </li>
+      )} */}
+      {isUserLoggedIn() && location.pathname !== "/panelmedico" && (
         <li>
           <a href="./panelmedico">Doctor Panel</a>
         </li>
@@ -113,9 +117,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
 
             {userData && (
               <div className="text-right text-sm mr-2">
-                <div className="font-semibold">
-                  Nombre: {fullname}
-                  </div>
+                <div className="font-semibold">Nombre: {fullname}</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   Doc: {documentId}
                 </div>
