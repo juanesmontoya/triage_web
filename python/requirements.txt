@@ -1,5 +1,4 @@
 Flask
-SpeechRecognition
 nltk
 pymongo
 python-dotenv

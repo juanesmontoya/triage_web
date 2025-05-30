@@ -54,6 +54,10 @@ npm run dev
 
 ```bash
 cd ../python
+#crear entorno virtual
+python -m venv venv
+#Activar entorno virtual
+venv\Scripts\activate.bat
 pip install -r requirements.txt
 python main.py
 ```
