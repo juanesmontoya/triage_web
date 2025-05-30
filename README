@@ -23,6 +23,43 @@ triage_web/
 
 ## 🚀 Cómo ejecutar el proyecto
 
+### 🧪 Modo desarrollo (hot reload)
+
+1. Asegúrate de tener Docker y Docker Compose instalados.
+2. Desde la raíz del proyecto, ejecuta:
+
+```bash
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+Esto iniciará:
+- `api` (backend en puerto `3000`)
+- `frontend` (React + Vite en `http://localhost:3001`)
+- `python` (servicio NLP en `3002`)
+- `mongo_db` (base de datos MongoDB en `27017`)
+
+> Nota: la red `triage-network` se crea automáticamente.
+
+---
+
+### 🚀 Modo producción
+
+1. Ejecuta:
+
+```bash
+docker-compose up --build -d
+```
+
+Esto usará los `Dockerfile` optimizados y:
+- Servirá el frontend por Nginx en `http://localhost:8080`
+- Mantendrá el backend y Python corriendo sin herramientas de desarrollo
+
+Los servicios acceden entre sí por sus nombres (`api`, `python`, `mongo_db`) gracias a Docker Compose.
+
+> MongoDB se conecta con: `mongodb://mongo_db:27017`
+> Python se accede desde el backend vía: `http://python:3002/processData`
+
+
 ### 🖥️ Modo local
 
 1. Clona el repositorio:
