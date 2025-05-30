@@ -1,0 +1,96 @@
+# 🏥 Triage Web App
+
+Aplicación web para la gestión de triages médicos, desarrollada con una arquitectura **hexagonal** basada en **microservicios**. Integra tecnologías modernas como **Node.js**, **React + Vite**, **MongoDB** y **Python** para procesamiento de lenguaje natural.
+
+## 🧩 Tecnologías utilizadas
+
+- 🔧 Backend: Node.js + Express
+- 🖥️ Frontend: React + Vite
+- 🐍 Módulos de procesamiento: Python (NLP y lógica de triage)
+- 🗄️ Base de datos: MongoDB
+- 🐳 Contenerización: Docker + Docker Compose
+
+## ⚙️ Estructura del proyecto
+
+```
+triage_web/
+├── backend/        → API RESTful en Node.js (Express + Mongoose)
+├── frontend/       → Interfaz web en React (Vite)
+├── python/         → Módulos de procesamiento de texto y cálculo de triage en Python
+├── docker-compose.yml
+└── README.md
+```
+
+## 🚀 Cómo ejecutar el proyecto
+
+### 🖥️ Modo local
+
+1. Clona el repositorio:
+
+```bash
+git clone https://github.com/juanesmontoya/triage_web.git
+cd triage_web
+```
+
+2. Instala dependencias y ejecuta cada servicio:
+
+#### 🔧 Backend (Node.js)
+
+```bash
+cd backend
+npm install
+npm run start
+```
+
+#### 🖥️ Frontend (React)
+
+```bash
+cd ../frontend
+npm install
+npm run dev
+```
+
+#### 🐍 Módulo Python
+
+```bash
+cd ../python
+pip install -r requirements.txt
+python main.py
+```
+
+### 🐳 Con Docker
+
+1. Desde la raíz del proyecto:
+
+```bash
+docker-compose build
+docker-compose up
+```
+
+Esto levantará todos los servicios (backend, frontend, módulo Python, y base de datos) en contenedores separados.
+
+## 🧠 Arquitectura
+
+Este proyecto está diseñado bajo una **arquitectura hexagonal**, que promueve:
+
+- Separación clara entre lógica de negocio y capas externas (web, base de datos, servicios)
+- Independencia de frameworks
+- Escalabilidad y mantenibilidad del código
+
+Cada módulo se comunica a través de **interfaces bien definidas**, permitiendo una fácil extensión e integración de nuevos servicios.
+
+## 📂 Funcionalidades destacadas
+
+- Registro y gestión de pacientes
+- Ingreso de motivo de consulta por texto o voz
+- Extracción automática de síntomas usando NLP en Python
+- Cálculo del nivel de triage según síntomas detectados
+- Interfaz médica para edición y descarga de reportes en PDF
+
+## 📄 Licencia
+
+MIT
+
+---
+
+> Trabajo de grado para Ingeniería de Software del Tecnológico de Antioquia.

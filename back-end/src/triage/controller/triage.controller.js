@@ -7,8 +7,8 @@ const PYTHON_URL = process.env.PYTHON_URL || 'http://localhost:3002/processData'
 export const createTriage = async (req, res = response) => {
     const { patientId, patientDocument, visitDetail } = req.body;
     try {
-        const triage = new Triage({ 
-            patientId, 
+        const triage = new Triage({
+            patientId,
             patientDocument,
             doctorId: '', // Initially no doctor assigned
             doctorDocument: '', // Initially no doctor assigned
@@ -47,26 +47,6 @@ export const createTriage = async (req, res = response) => {
     }
 }
 
-export const getTriage = async (req, res = response) => {
-    const { id } = req.params;
-    try {
-        const triage = await Triage.findById(id);
-        if (!triage) {
-            return res.status(404).json({
-                ok: false,
-                message: "Triage not found",
-            });
-        }
-        return res.status(200).json({
-            ok: true,
-            triage
-        });
-    }
-    catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
-}
-
 export const getAllTriage = async (req, res = response) => {
     try {
         const triages = await Triage.find();
@@ -84,10 +64,11 @@ export const getAllTriage = async (req, res = response) => {
     catch (error) {
         return res.status(500).json({ message: error.message });
     }
-}   
+}
 
 export const updateTriage = async (req, res = response) => {
-    const { id, doctorId, diagnosis, triageLevel, state } = req.body;
+    const { id, ...data } = req.body;
+
     try {
         const triage = await Triage.findById(id);
         if (!triage) {
@@ -96,39 +77,20 @@ export const updateTriage = async (req, res = response) => {
                 message: "Triage not found",
             });
         }
-        triage.doctorId = doctorId;
-        triage.diagnosis = diagnosis;
-        triage.triageLevel = triageLevel;
-        triage.state = state;
+
+        // Elimina campos que no deberían modificarse
+        delete data._id;
+        delete data.createdAt;
+        delete data.updatedAt;
+
+        // Aplica los cambios válidos
+        triage.set(data);
 
         await triage.save();
 
         return res.status(200).json({
             ok: true,
             message: "Triage updated successfully",
-            triage
-        });
-    }
-    catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
-}
-
-export const updateTriageLevel = async (req, res = response) => {
-    const { id, triageLevel } = req.body;
-    try {
-        const triage = await Triage.findById(id);
-        if (!triage) {
-            return res.status(404).json({
-                ok: false,
-                message: "Triage not found",
-            });
-        }
-        triage.triageLevel = triageLevel;
-        await triage.save();
-        return res.status(200).json({
-            ok: true,
-            message: "Triage level updated successfully",
             triage
         });
     }
