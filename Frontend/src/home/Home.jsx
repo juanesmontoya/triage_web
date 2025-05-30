@@ -3,10 +3,10 @@ import Navbar from '../components/Navbar'
 import Banner from '../components/Banner'
 import Footer from '../components/Footer'
 
-function Home() {
+function Home({ darkMode = false, setDarkMode = () => {} }) {
   return (
   <>
-      <Navbar />
+      <Navbar darkMode={darkMode} setDarkMode={setDarkMode}/>
       <Banner />
       <Footer />
   </>
