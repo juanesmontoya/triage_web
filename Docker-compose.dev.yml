@@ -3,7 +3,7 @@ services:
     container_name: backend
     build: 
       context: ./back-end
-      dockerfile: dockerfile.dev
+      dockerfile: Dockerfile.dev
     command: npm start
     ports:
       - "3000:3000"
@@ -33,6 +33,7 @@ services:
     container_name: frontend
     build: 
       context: ./Frontend
+      dockerfile: Dockerfile.dev
     working_dir: /app
     ports:
       - "3001:3001"
@@ -46,6 +47,7 @@ services:
     container_name: python
     build: 
       context: ./python
+      dockerfile: Dockerfile
     working_dir: /app
     ports:
       - "3002:3002"
