@@ -56,12 +56,14 @@ function Login() {
                             ✕
                         </Link>
 
-                        <h3 className="font-bold text-lg">Login</h3>
+                        <div className="text-center">
+                            <h1 className="font-bold text-lg">Login</h1>
+                            <h3 className="font-medium text-sm mt-1">Espacio exclusivo para profesionales de la salud.</h3>
+                        </div>
 
                         {/* Document */}
-                        <div className='mt-4 space-y-2'>
-                            <span>Documento</span>
-                            <br />
+                        <div className='mt-4 space-x-2 text-center'>
+                            <span>Documento: </span>
                             <input
                                 type='text'
                                 placeholder='Ingresa tu documento'
@@ -72,9 +74,8 @@ function Login() {
                         </div>
 
                         {/* Password */}
-                        <div className='mt-4 space-y-2'>
-                            <span>Contraseña</span>
-                            <br />
+                        <div className='mt-4 space-x-2 text-center'>
+                            <span>Contraseña: </span>
                             <input
                                 type='password'
                                 placeholder='Ingresa tu contraseña'
@@ -85,14 +86,16 @@ function Login() {
                         </div>
 
                         {/* Button */}
-                        <div className='flex justify-around mt-4'>
+                        <div className='flex justify-around mt-4 text-center'>
                             <button className="bg-pink-500 text-white rounded-md px-3 py-1 hover:bg-pink-700 duration-200">
                                 Login
                             </button>
+                        </div>
+                        <div className='flex justify-around mt-4 text-center'>
                             <p>
                                 ¿No estás registrado?{" "}
                                 <Link to="/register" className="underline text-blue-500 cursor-pointer">
-                                    Registrarse
+                                    Registrate
                                 </Link>
                             </p>
                         </div>

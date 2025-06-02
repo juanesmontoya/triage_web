@@ -134,7 +134,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
                     document.getElementById("my_modal_3").showModal()
                   }
                 >
-                  Login
+                  Login Salud
                 </a>
                 <Login />
               </div>

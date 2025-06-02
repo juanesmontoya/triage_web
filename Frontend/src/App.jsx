@@ -1,7 +1,7 @@
 import React from "react";
 import Home from "./home/Home";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import Sintomas from "./components/sintomas";
+import Sintomas from "./components/Sintomas";
 import Panelmedico from "./components/Panelmedico";
 import { Toaster } from "react-hot-toast";
 import { useAuth } from "./context/AuthProvider";
