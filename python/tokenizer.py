@@ -1,8 +1,8 @@
 import nltk
-from nltk.tokenize import word_tokenize
+#from nltk.tokenize import word_tokenize
+from nltk.tokenize import RegexpTokenizer
 
 def tokenize_text(text):
-    tokens = word_tokenize(text)
-    # Normalizar tokens a minúsculas
-    tokens = [token.lower() for token in tokens]
+    tokenizer = RegexpTokenizer(r'\w+')
+    tokens = tokenizer.tokenize(text.lower())  # Convertir a minúsculas y tokenizar
     return tokens

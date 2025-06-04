@@ -7,7 +7,22 @@ import symptomRoutes from './routes/symptom.routes.js';
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+  'https://triage-frontend.purpleflower-c7eae35a.brazilsouth.azurecontainerapps.io'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
 
 app.use(express.json());

@@ -129,7 +129,7 @@ const Sintomas = () => {
     };
 
     await axios
-      .post("http://localhost:3000/triage/create", triageInfo)
+      .post(`${import.meta.env.VITE_API_URL}triage/create`, triageInfo)
       .then((res) => {
         console.log(res.data);
         if (res.data) {

@@ -26,7 +26,9 @@ export const createTriage = async (req, res = response) => {
         // Llamar al servicio de Python para procesar la data
         const pythonResponse = await axios.post(PYTHON_URL, {
             text: visitDetail
-        });
+        }, {
+            timeout: 120000
+        }); // Timeout de 2 minutos
 
         // Verificar respuesta de Python con los datos esperados
         const { found_keywords, triage_level } = pythonResponse.data;

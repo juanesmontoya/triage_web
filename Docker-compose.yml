@@ -34,7 +34,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_BACKEND_URL="http://api:3000"
+        - VITE_BACKEND_URL="http://localhost:3000/"
     ports:
       - "8080:80" # Producción servida por Nginx
     depends_on:

@@ -1,0 +1,53 @@
+# === GLOBAL IGNORES ===
+.DS_Store
+.env
+.env.*
+*.log
+*.pid
+*.swp
+
+# === NODE.JS (back-end y frontend) ===
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+guia_despliegue_triage_web.txt
+
+# === VITE / REACT ===
+dist/
+build/
+
+# === PYTHON ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.env/
+venv/
+.envrc
+
+# === TERRAFORM ===
+.terraform/
+terraform.tfstate
+terraform.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+override.tf
+override.tf.json
+.plan
+
+# === DOCKER ===
+*.tar
+*.img
+docker-compose.override.yml
+
+# === VS CODE / IDEs ===
+.vscode/
+.idea/
+
+# === OTHER ===
+coverage/
+logs/

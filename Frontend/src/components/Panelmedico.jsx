@@ -16,7 +16,7 @@ const labelMap = {
   createdAt: "Fecha de creación",
 };
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 const PanelMedico = ({ darkMode, setDarkMode }) => {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
 
   const loadTriages = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/triage/triages`);
+      const res = await axios.get(`${API_BASE}triage/triages`);
       if (res.data.triages) {
         setTriages(res.data.triages);
         return res.data.triages;
@@ -95,7 +95,7 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
       return toast.error("El nivel de triage debe ser un número entre 1 y 5");
 
     try {
-      await axios.put(`${API_BASE}/triage/updateTriage`, {
+      await axios.put(`${API_BASE}triage/updateTriage`, {
         id: selectedTriage._id,
         doctorId: authUser._id,
         doctorDocument: authUser.document,
@@ -123,7 +123,7 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
     if (isNaN(level) || level < 1 || level > 5)
       return toast.error("El nivel de triage debe ser un número entre 1 y 5");
     try {
-      await axios.put(`${API_BASE}/triage/updateTriage`, {
+      await axios.put(`${API_BASE}triage/updateTriage`, {
         id: selectedTriage._id,
         doctorId: authUser._id,
         doctorDocument: authUser.document,

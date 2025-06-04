@@ -37,6 +37,8 @@ services:
     working_dir: /app
     ports:
       - "3001:3001"
+    environment:
+      - VITE_API_URL=http://localhost:3000/
     volumes:
       - ./frontend:/app
       - /app/node_modules
