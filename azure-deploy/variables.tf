@@ -18,3 +18,8 @@ variable "mongodb_uri" {
   description = "URI del cluster MongoDB utilizado por la app"
   type        = string
 }
+
+variable "python_url" {
+  description = "URL del servicio Python que procesa los datos"
+  type        = string
+}

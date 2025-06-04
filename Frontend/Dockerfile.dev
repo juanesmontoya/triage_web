@@ -2,6 +2,7 @@ FROM node:24-alpine
 WORKDIR /app
 COPY package*.json ./
 COPY . .
+COPY .env .env
 RUN npm cache clean --force
 RUN npm install
 RUN npm run build

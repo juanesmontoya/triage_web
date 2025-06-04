@@ -20,7 +20,7 @@ function Banner() {
     const patientData = { document: data.document };
     
     await axios
-      .post("http://localhost:3000/pacient/validatePacient", patientData)
+      .post(`${import.meta.env.VITE_API_URL}pacient/validatePacient`, patientData)
       .then((res) => {
         console.log(res.data);
         if (res.data.ok && res.data.pacient) {
@@ -87,7 +87,7 @@ function Banner() {
     };
 
     await axios
-      .post("http://localhost:3000/pacient/createPacient", patientInfo)
+      .post(`${import.meta.env.VITE_API_URL}pacient/createPacient`, patientInfo)
       .then((res) => {
         console.log(res.data);
         if (res.data.ok && res.data.pacient) {
