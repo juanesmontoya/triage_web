@@ -7,9 +7,11 @@ import symptomRoutes from './routes/symptom.routes.js';
 
 const app = express();
 
-const allowedOrigins = [
-  'https://triage-frontend.purpleflower-c7eae35a.brazilsouth.azurecontainerapps.io'
-];
+//configuration of CORS for development and production environments
+const isDev = process.env.NODE_ENV !== 'production';
+const allowedOrigins = isDev
+? ['http://localhost:3001']
+: ['https://triage-frontend.purpleflower-c7eae35a.brazilsouth.azurecontainerapps.io'];
 
 app.use(cors({
   origin: function (origin, callback) {
