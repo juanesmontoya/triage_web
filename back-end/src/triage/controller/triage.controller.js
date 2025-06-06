@@ -13,6 +13,8 @@ export const createTriage = async (req, res = response) => {
             doctorId: '', // Initially no doctor assigned
             doctorDocument: '', // Initially no doctor assigned
             diagnosis: '', // Initially no diagnosis
+            temperature: '', // Initially no temperature
+            pressure: '', // Initially no pressure
             state: 'Open', // Default state
             visitDetail
         });

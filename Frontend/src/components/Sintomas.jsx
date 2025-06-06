@@ -11,7 +11,7 @@ const Sintomas = () => {
   const [chatCompleted, setChatCompleted] = useState(false);
   const [patientInfo, setPatientInfo] = useState(null);
   const [visitDetail, setVisitDetail] = useState('');
-  
+
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -33,7 +33,7 @@ const Sintomas = () => {
     }
 
     initializeSpeechRecognition();
-    
+
     setTimeout(() => {
       addBotMessage(triageQuestion);
     }, 1000);
@@ -55,7 +55,7 @@ const Sintomas = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
-      
+
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'es-ES';
@@ -95,7 +95,7 @@ const Sintomas = () => {
       timestamp: new Date().toLocaleTimeString()
     };
     setMessages(prev => [...prev, newMessage]);
-    
+
     // Leer el mensaje en voz alta
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -121,7 +121,7 @@ const Sintomas = () => {
   const finalizarChat = async (userResponse) => {
     setChatCompleted(true);
     addBotMessage("Gracias por proporcionar esta información. Estamos procesando tu consulta y te hemos registrado en la sala de espera. Un profesional de salud te estará contactando pronto. ¡Cuídate!");
-    
+
     const triageInfo = {
       patientId: patientInfo._id,
       patientDocument: patientInfo.document,
@@ -134,10 +134,10 @@ const Sintomas = () => {
         console.log(res.data);
         if (res.data) {
           toast.success("Triage creado exitosamente!");
-          
+
           // Guardar para compatibilidad (formato original)
           localStorage.setItem("TriageData", JSON.stringify(res.data.triage));
-          
+
           // Crear estructura para Panel Médico
           const conversationData = {
             sessionId: res.data.triage._id || Date.now().toString(),
@@ -153,8 +153,8 @@ const Sintomas = () => {
             triageResult: {
               level: `NIVEL ${res.data.triage.triageLevel || 6} - EVALUACIÓN AUTOMÁTICA`,
               recommendation: res.data.triage.visitDetail || userResponse,
-              color: res.data.triage.triageLevel <= 2 ? 'error' : 
-                     res.data.triage.triageLevel <= 4 ? 'warning' : 'success',
+              color: res.data.triage.triageLevel <= 2 ? 'error' :
+                res.data.triage.triageLevel <= 4 ? 'warning' : 'success',
               score: null // Sin score automático por ahora
             },
             timestamp: new Date().toISOString(),
@@ -167,7 +167,7 @@ const Sintomas = () => {
           const existingConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
           const updatedConversations = [...existingConversations, conversationData];
           localStorage.setItem('conversations', JSON.stringify(updatedConversations));
-          
+
           setTimeout(() => {
             window.location.href = '/';
           }, 3000);
@@ -202,7 +202,7 @@ const Sintomas = () => {
     if (currentMessage.trim() === '' || chatCompleted) return;
 
     const userResponse = currentMessage.trim();
-    
+
     if (!patientInfo || !patientInfo._id || !patientInfo.document) {
       toast.error('Error: Información del paciente incompleta. Redirigiendo al inicio...');
       setTimeout(() => {
@@ -213,7 +213,7 @@ const Sintomas = () => {
 
     addUserMessage(userResponse);
     setCurrentMessage('');
-    
+
     setTimeout(() => {
       finalizarChat(userResponse);
     }, 1000);
@@ -243,7 +243,7 @@ const Sintomas = () => {
             </div>
             <button
               onClick={goHome}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
               <Home className="w-4 h-4" />
               Inicio
@@ -263,11 +263,10 @@ const Sintomas = () => {
                 className={`flex mb-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                    message.sender === 'user'
+                  className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${message.sender === 'user'
                       ? 'bg-blue-600 text-white'
                       : 'bg-white text-gray-800 shadow-md border'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     {message.sender === 'bot' ? (
@@ -294,11 +293,10 @@ const Sintomas = () => {
               <div className="flex justify-center mb-6">
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
-                  className={`w-32 h-32 rounded-full flex items-center justify-center text-white font-bold shadow-2xl transition-all transform ${
-                    isRecording 
-                      ? 'bg-red-500 animate-pulse scale-110' 
+                  className={`w-32 h-32 rounded-full flex items-center justify-center text-white font-bold shadow-2xl transition-all transform ${isRecording
+                      ? 'bg-red-500 animate-pulse scale-110'
                       : 'bg-blue-500 hover:bg-blue-600 hover:scale-105'
-                  }`}
+                    }`}
                   disabled={false}
                 >
                   {isRecording ? (
@@ -317,8 +315,8 @@ const Sintomas = () => {
 
               <div className="text-center mb-6">
                 <p className="text-xl font-bold text-gray-700 mb-2">
-                  {isRecording 
-                    ? '🎤 Escuchando... Describe tus síntomas ahora' 
+                  {isRecording
+                    ? '🎤 Escuchando... Describe tus síntomas ahora'
                     : '🎤 Presiona el botón azul para hablar'
                   }
                 </p>
@@ -333,14 +331,14 @@ const Sintomas = () => {
               </div>
 
               {/* Text Input */}
-              <div className="flex gap-3">
-                <input
-                  type="text"
+              <div className="flex gap-3 w-full max-w-3xl mx-auto">
+                <textarea
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                   placeholder="Describe tus síntomas aquí..."
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  rows={3}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none overflow-auto"
                   disabled={false}
                 />
                 <button

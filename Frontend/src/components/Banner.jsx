@@ -196,7 +196,7 @@ function Banner() {
                   disabled={isLoading}
                   className="btn btn-secondary flex-1 sm:flex-none sm:min-w-[140px]"
                 >
-                  Registro
+                  Registro Pacientes
                 </button>
               </div>
             </form>
