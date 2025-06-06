@@ -34,6 +34,13 @@ const triageSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    temperature: {
+        type: String
+    },
+    pressure: {
+        type: String,
+        trim: true
+    },
     state: {
         type: String,
         default: 'Open',

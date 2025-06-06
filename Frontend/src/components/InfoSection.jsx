@@ -17,10 +17,21 @@ const InfoSection = () => {
                         <br /><br />
                         A la derecha encontrarás los manuales de usuario. La plataforma permite dos modos de uso: como paciente o como profesional de la salud. Puedes explorar ambos perfiles; sin embargo, si te registras con ambas funciones, no podrás visualizar tus propios registros como doctor.
                         <br /><br />
+                        Puedes iniciar sesión con el usuario paciente <span className="font-semibold">1234321</span> para realizar la consulta pero tambien puedes registrar un usuario cualquiera.
+                        <br /><br />
                         Finalmente, te invitamos a compartir tu opinión sobre el sistema a través del siguiente formulario de retroalimentación:
                         <br />
-                        <span className="text-accent">Link: Por crear</span>
                     </p>
+                    <div className="text-center mt-4">
+                        <a
+                            href="https://forms.office.com/r/np0a1NjGTS"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent font-semibold underline hover:text-accent-focus"
+                        >
+                            Formulario
+                        </a>
+                    </div>
                 </div>
 
                 {/* Columna Derecha - 1/4 */}

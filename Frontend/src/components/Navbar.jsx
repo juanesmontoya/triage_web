@@ -52,11 +52,10 @@ export default function Navbar({ darkMode, setDarkMode }) {
   return (
     <>
       <div
-        className={`w-full fixed top-1 left-1 z-50  ${
-          sticky
-            ? "sticky-navbar shadow-md bg-base-200 duration-300 transition-all ease-in-out"
-            : ""
-        }`}
+        className={`w-full fixed top-0 left-1 z-50  ${sticky
+          ? "sticky-navbar shadow-md bg-base-200 duration-300 transition-all ease-in-out"
+          : ""
+          }`}
       >
         <div className="navbar bg-base-100">
           <div className="navbar-start">
@@ -85,6 +84,14 @@ export default function Navbar({ darkMode, setDarkMode }) {
               </ul>
             </div>
             <a className=" text-2xl font-bold cursor-pointer">Triage WEB</a>
+            {location.pathname === "/panelmedico" && (
+              <button
+                className="ml-4 btn btn-sm btn-info"
+                onClick={() => window.open('/symptoms-table', '_blank')}
+              >
+                Síntomología
+              </button>
+            )}
           </div>
           <div className="navbar-end space-x-3">
             <div className="navbar-center hidden lg:flex">

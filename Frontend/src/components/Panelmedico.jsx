@@ -12,6 +12,8 @@ const labelMap = {
   visitDetail: "Motivo de consulta",
   symptoms: "Síntomas",
   triageLevel: "Nivel de triage",
+  temperature: "Temperatura",
+  pressure: "Presión arterial",
   state: "Estado",
   createdAt: "Fecha de creación",
 };
@@ -25,7 +27,7 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
   const [statusFilter, setStatusFilter] = useState("Open");
   const [sortAsc, setSortAsc] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editData, setEditData] = useState({ diagnosis: "", triageLevel: "" });
+  const [editData, setEditData] = useState({ diagnosis: "", triageLevel: "", temperature: "", pressure: "" });
   const [authUser] = useState(() => {
     const stored = localStorage.getItem("Users");
     return stored ? JSON.parse(stored) : null;
@@ -79,20 +81,23 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
 
     setSelectedTriage(triage);
     setEditData({
-      diagnosis: triage.diagnosis || "",
-      triageLevel: triage.triageLevel || "",
+      triageLevel: triage.triageLevel || ""
     });
   };
 
   const handleSave = async () => {
     const diagnosis = editData.diagnosis.trim();
     const level = parseInt(editData.triageLevel, 10);
+    const temperature = editData.temperature.trim();
+    const pressure = editData.pressure.trim();
 
     if (!diagnosis) return toast.error("El diagnóstico es obligatorio");
     if (diagnosis.length < 5 || diagnosis.length > 300)
       return toast.error("El diagnóstico debe tener entre 5 y 300 caracteres");
     if (isNaN(level) || level < 1 || level > 5)
       return toast.error("El nivel de triage debe ser un número entre 1 y 5");
+    if (!temperature && !pressure)
+      return toast.error("La temperatura o presión arterial son obligatorias");
 
     try {
       await axios.put(`${API_BASE}triage/updateTriage`, {
@@ -101,7 +106,15 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
         doctorDocument: authUser.document,
         diagnosis: editData.diagnosis,
         triageLevel: editData.triageLevel,
+        temperature: editData.temperature,
+        pressure: editData.pressure,
         state: selectedTriage.state,
+      });
+      // Reiniciar campos editables
+      setEditData({
+        diagnosis: '',
+        pressure: '',
+        temperature: ''
       });
       toast.success("Triage actualizado");
       const updated = await loadTriages();
@@ -114,24 +127,21 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
   };
 
   const handleCloseTriage = async () => {
-    const diagnosis = editData.diagnosis.trim();
-    const level = parseInt(editData.triageLevel, 10);
-
-    if (!diagnosis) return toast.error("El diagnóstico es obligatorio");
-    if (diagnosis.length < 5 || diagnosis.length > 300)
-      return toast.error("El diagnóstico debe tener entre 5 y 300 caracteres");
-    if (isNaN(level) || level < 1 || level > 5)
-      return toast.error("El nivel de triage debe ser un número entre 1 y 5");
     try {
       await axios.put(`${API_BASE}triage/updateTriage`, {
         id: selectedTriage._id,
         doctorId: authUser._id,
         doctorDocument: authUser.document,
-        diagnosis: editData.diagnosis,
-        triageLevel: editData.triageLevel,
+        diagnosis: selectedTriage.diagnosis,
+        temperature: selectedTriage.temperature,
+        pressure: selectedTriage.pressure,
+        triageLevel: selectedTriage.triageLevel,
         state: "Closed",
       });
+
+      setEditData({ diagnosis: "", pressure: "", temperature: "" });
       toast.success("Triage cerrado");
+
       const updated = await loadTriages();
       const current = updated.find((t) => t._id === selectedTriage._id);
       if (current) handleSelectTriage(current);
@@ -140,6 +150,7 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
       return [err];
     }
   };
+
 
   // Función generatePDF simplificada pero intuitiva
   const generatePDF = () => {
@@ -153,9 +164,8 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
             <html>
             <head>
                 <meta charset="UTF-8">
-                <title>Reporte Médico - ${
-                  selectedTriage.patientDocument
-                }</title>
+                <title>Reporte Médico - ${selectedTriage.patientDocument
+      }</title>
                 <style>
                     * { box-sizing: border-box; }
                     
@@ -320,8 +330,8 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
                     <div class="header">
                         <h1>🏥 Reporte Médico de Triage</h1>
                         <p>Sistema de Gestión Médica - ${new Date().toLocaleDateString(
-                          "es-ES"
-                        )}</p>
+        "es-ES"
+      )}</p>
                     </div>
                     
                     <div class="content">
@@ -329,47 +339,42 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
                             <div class="section-title">📋 Información del Paciente</div>
                             <div class="info-row">
                                 <div class="info-label">Documento:</div>
-                                <div class="info-value">${
-                                  selectedTriage.patientDocument ||
-                                  "No especificado"
-                                }</div>
+                                <div class="info-value">${selectedTriage.patientDocument ||
+      "No especificado"
+      }</div>
                             </div>
                             <div class="info-row">
                                 <div class="info-label">Doctor:</div>
-                                <div class="info-value">${
-                                  authUser?.fullname || "No especificado"
-                                } (${authUser?.document || "N/A"})</div>
+                                <div class="info-value">${authUser?.fullname || "No especificado"
+      } (${authUser?.document || "N/A"})</div>
                             </div>
                             <div class="info-row">
                                 <div class="info-label">Estado:</div>
                                 <div class="info-value">
-                                    <span class="status-badge ${
-                                      selectedTriage.state === "Open"
-                                        ? "status-open"
-                                        : "status-closed"
-                                    }">
-                                        ${
-                                          selectedTriage.state ||
-                                          "No especificado"
-                                        }
+                                    <span class="status-badge ${selectedTriage.state === "Open"
+        ? "status-open"
+        : "status-closed"
+      }">
+                                        ${selectedTriage.state ||
+      "No especificado"
+      }
                                     </span>
                                 </div>
                             </div>
                             <div class="info-row">
                                 <div class="info-label">Fecha de ingreso:</div>
                                 <div class="info-value">${new Date().toLocaleString(
-                                  "es-ES"
-                                )}</div>
+        "es-ES"
+      )}</div>
                             </div>
                         </div>
                         
                         <div class="section">
                             <div class="section-title">🩺 Motivo de Consulta</div>
-                            <div class="info-value" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                ${
-                                  selectedTriage.visitDetail ||
-                                  "No se especificó motivo de consulta"
-                                }
+                            <div class="info-value" style="background: #f8f9fa; padding: 15px; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word;">
+                                ${selectedTriage.visitDetail ||
+      "No se especificó motivo de consulta"
+      }
                             </div>
                         </div>
                         
@@ -377,44 +382,63 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
                             <div class="section-title">🎯 Nivel de Triage</div>
                             <div class="highlight-box">
                                 <strong style="font-size: 18px; color: #1e40af;">
-                                    ${
-                                      selectedTriage.triageLevel ||
-                                      editData.triageLevel ||
-                                      "No evaluado"
-                                    }
+                                    ${selectedTriage.triageLevel ||
+      editData.triageLevel ||
+      "No evaluado"
+      }
                                 </strong>
                             </div>
                         </div>
                         
                         <div class="section">
                             <div class="section-title">🩹 Síntomas Reportados</div>
-                            <div class="symptoms-list">
-                                ${
-                                  selectedTriage.symptoms &&
-                                  selectedTriage.symptoms.length > 0
-                                    ? `
+                            <div class="symptoms-list style="white-space: pre-wrap; word-wrap: break-word;">
+                                ${selectedTriage.symptoms &&
+        selectedTriage.symptoms.length > 0
+        ? `
                                     <ul>
                                         ${selectedTriage.symptoms
-                                          .map(
-                                            (symptom) => `<li>${symptom}</li>`
-                                          )
-                                          .join("")}
+          .map(
+            (symptom) => `<li>${symptom}</li>`
+          )
+          .join("")}
                                     </ul>
                                 `
-                                    : '<p style="text-align: center; color: #6c757d; font-style: italic;">No se reportaron síntomas específicos</p>'
-                                }
+        : '<p style="text-align: center; color: #6c757d; font-style: italic;">No se reportaron síntomas específicos</p>'
+      }
                             </div>
                         </div>
+
+                        <div class="section">
+  <div class="section-title">🧾 Signos Vitales</div>
+  <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+    
+    <div style="flex: 1; min-width: 200px;">
+      <div class="info-label">🌡️ Temperatura</div>
+      <div class="info-value" style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+        ${selectedTriage.temperature || "No registrada"}
+      </div>
+    </div>
+
+    <div style="flex: 1; min-width: 200px;">
+      <div class="info-label">🩸 Presión Arterial</div>
+      <div class="info-value" style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+        ${selectedTriage.pressure || "No registrada"}
+      </div>
+    </div>
+
+  </div>
+</div>
+
                         
                         <div class="section">
                             <div class="section-title">📋 Diagnóstico Médico</div>
-                            <div class="highlight-box" style="background: linear-gradient(135deg, #e6f7ff, #f0f8ff); border-color: #1e40af;">
-                                <strong style="color: #1e40af; font-size: 16px;">
-                                    ${
-                                      selectedTriage.diagnosis ||
-                                      editData.diagnosis ||
-                                      "Pendiente de evaluación médica"
-                                    }
+                            <div class="highlight-box" style="background: linear-gradient(135deg, #e6f7ff, #f0f8ff); border-color: #1e40af; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; text-align: left;">
+                                <strong style="color: #1e40af; font-size: 16px; display: inline-block; margin: 0;">
+                                    ${selectedTriage.diagnosis ||
+      selectedTriage.diagnosis ||
+      "Pendiente de evaluación médica"
+      }
                                 </strong>
                             </div>
                         </div>
@@ -423,9 +447,8 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
                     <div class="footer">
                         <p><strong>Sistema de Gestión Médica</strong></p>
                         <p>Este documento es confidencial y está protegido por las leyes de protección de datos médicos</p>
-                        <p style="margin-top: 10px;">ID del Triage: ${
-                          selectedTriage._id
-                        }</p>
+                        <p style="margin-top: 10px;">ID del Triage: ${selectedTriage._id
+      }</p>
                     </div>
                 </div>
             </body>
@@ -463,17 +486,15 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
           />
           <div className="flex mb-4 gap-2">
             <button
-              className={`btn ${
-                statusFilter === "Open" ? "btn-primary" : "btn-outline"
-              }`}
+              className={`btn ${statusFilter === "Open" ? "btn-primary" : "btn-outline"
+                }`}
               onClick={() => setStatusFilter("Open")}
             >
               Open
             </button>
             <button
-              className={`btn ${
-                statusFilter === "Closed" ? "btn-primary" : "btn-outline"
-              }`}
+              className={`btn ${statusFilter === "Closed" ? "btn-primary" : "btn-outline"
+                }`}
               onClick={() => setStatusFilter("Closed")}
             >
               Closed
@@ -492,11 +513,10 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
               filteredTriages.map((t) => (
                 <div
                   key={t._id}
-                  className={`card mb-2 p-3 cursor-pointer transition-colors ${
-                    selectedTriage?._id === t._id
-                      ? "bg-blue-100 dark:bg-blue-900 border-blue-300"
-                      : "bg-gray-200 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-800"
-                  }`}
+                  className={`card mb-2 p-3 cursor-pointer transition-colors ${selectedTriage?._id === t._id
+                    ? "bg-blue-100 dark:bg-blue-900 border-blue-300"
+                    : "bg-gray-200 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-800"
+                    }`}
                   onClick={() => handleSelectTriage(t)}
                 >
                   <h3 className="font-semibold">
@@ -517,7 +537,7 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
           </div>
         </div>
 
-        <div className="w-2/3 p-6 overflow-y-auto">
+        <div className="w-2/3 p-6 overflow-y-auto dark:bg-gray-900 dark:text-white">
           {selectedTriage ? (
             <div className="space-y-4">
               <h2 className="text-3xl font-bold mb-4">Detalle del Triage</h2>
@@ -525,29 +545,33 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
                 {Object.entries(selectedTriage)
                   .filter(([key]) => !["_id", "__v"].includes(key))
                   .map(([key, value]) => (
-                    <div key={key}>
+                    <div key={key} className={`${["visitDetail", "diagnosis", "symptoms"].includes(key) ? "col-span-2" : ""
+                      }`}>
                       <label className="font-semibold capitalize">
                         {labelMap[key] || key}
                       </label>
-                      <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+                      <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg whitespace-pre-wrap break-words">
                         {key === "createdAt"
                           ? new Date(value).toLocaleString("es-CO", {
-                              weekday: "long",
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                           : Array.isArray(value)
-                          ? value.join(", ")
-                          : String(value)}
+                            ? value.join(", ")
+                            : String(value)}
                       </div>
                     </div>
                   ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <hr className="my-6 border-t border-gray-300 dark:border-gray-600" />
+              <h1 className="text-sm font-semibold text-gray-400 uppercase mt-6 mb-2">Campos editables</h1>
+
+              <div className="bg-base-200 p-6 rounded-xl grid grid-cols-2 gap-4">
                 <div>
                   <label className="font-semibold">Agregar diagnóstico</label>
                   <input
@@ -560,7 +584,35 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
                   />
                 </div>
                 <div>
-                  <label className="font-semibold">Nivel de triage</label>
+                  <label className="font-semibold">Temperatura (°C)</label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full"
+                    value={editData.temperature || ""}
+                    onChange={(e) =>
+                      setEditData({ ...editData, temperature: e.target.value })
+                    }
+                    placeholder="Ej: 36.5"
+                    disabled={selectedTriage?.state === "Closed"}
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold">Presión Arterial</label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full"
+                    value={editData.pressure || ""}
+                    onChange={(e) =>
+                      setEditData({ ...editData, pressure: e.target.value })
+                    }
+                    placeholder="Ej: 120/80"
+                    disabled={selectedTriage?.state === "Closed"}
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold">Confirmar Nivel de triage</label>
                   <input
                     className="input input-bordered w-full"
                     value={editData.triageLevel}
@@ -585,6 +637,11 @@ const PanelMedico = ({ darkMode, setDarkMode }) => {
                   <button
                     className="btn btn-warning gap-2"
                     onClick={handleCloseTriage}
+                    disabled={
+                      !selectedTriage.diagnosis?.trim() ||
+                      !selectedTriage.temperature?.trim() ||
+                      !selectedTriage.pressure?.trim()
+                    }
                   >
                     <X className="w-4 h-4" /> Cerrar Triage
                   </button>

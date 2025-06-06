@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { useAuth } from "./context/AuthProvider";
 import Register from "./components/Register";
 import Navbar from "./components/Navbar";
+import SymptomsTable from "./components/SymptomsTable";
 import { useLocation } from "react-router-dom";
 
 function App({ darkMode, setDarkMode }) {
@@ -34,6 +35,8 @@ function App({ darkMode, setDarkMode }) {
               <Panelmedico darkMode={darkMode} setDarkMode={setDarkMode} />
             }
           />
+          <Route path="/symptoms-table" element={<SymptomsTable />} />
+
         </Routes>
         <Toaster />
       </div>
